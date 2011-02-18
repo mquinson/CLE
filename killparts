@@ -1,0 +1,62 @@
+#! /usr/bin/perl
+
+use strict;
+
+my $emptytemplate = "";
+#my $emptytemplate = "\n/*******************/\n/* A VOUS DE JOUER */\n/*******************/\n\n";
+
+
+my $killed=0;
+my $kill=0;
+my $replace=0;
+my $replaceStr = "";
+my $nline=0;
+while (<>) {
+  $nline++;
+#  s/\t/    /g;
+  die "BEGINKILL in kill section (l$nline)\n" 
+    if ($kill && /BEGINKILL/);
+  die "ENDKILL out of kill section (l$nline)\n" 
+    if (!$kill && /ENDKILL/);
+  die "REPLACE out of kill section (l$nline)\n" 
+    if (!$kill && /REPLACE/);
+
+  if (/BEGINKILL/) {
+    print STDERR "  Enter kill (l$nline)\n";
+    $kill = 1;
+    $killed++ unless $replace;
+    $replaceStr = "";
+  }
+  if (/REPLACE/) {
+    print STDERR "  Get template (l$nline)\n";
+    $killed++;
+    $replace = 1;
+    next;
+  } 
+  if (/ENDKILL/) {
+    print STDERR "  Leave kill (l$nline)\n";
+    $killed++;
+    $replace = 0;
+    $kill = 0;
+    print $replaceStr||$emptytemplate;
+    next;
+  } 
+  last if /Local Variables:/;
+  next if /- coding: utf-8 -/;
+
+  if ($replace) {
+      $_ =~ s|//||;
+      $replaceStr .= $_;
+  } elsif ($_ =~ /KILLIT/) {
+      print STDERR "  Kill line $nline\n";
+      $killed++;
+  } else {
+      if ($kill) {
+	  $killed++;
+      } else {
+	  print $_;
+      }
+  }
+}
+print STDERR "  $killed lines killed\n" if ($killed);
+die "End of file in kill section\n" if $kill;
