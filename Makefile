@@ -1,7 +1,7 @@
 DEPENDENCIES=gtksourceview-2.0 libglade-2.0
 
 CFLAGS=-g `pkg-config --cflags $(DEPENDENCIES)` -Werror -Wall -I.
-LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic
+LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl
 
 PLUGINS=logo.so recursion.so
 
