@@ -1,4 +1,4 @@
-/* logo.c: main of the Logo lesson */
+
 
 #include <string.h> // KILLIT
 #include <stdlib.h>
@@ -11,30 +11,16 @@
 
 #include "core/exercise.h"
 #include "core/lesson.h"
-#include "logo/turtle_userside.h"
-#include "logo/turtle.h"
-#include "lessons/logo.h"
+#include "logo/entity_userside.h"
+#include "logo/entity.h"
+#include "logo/exercise.h"
 #include "UI/CLE.h"
-
-/* Prototypes of the exercises composing this lesson */
-exercise_t logo_threesquare_create(void);
-exercise_t logo_forward_create(void);
-
-
-lesson_t lesson_main() {
-	return lesson_new("Logo",2,
-			"Three squares", logo_threesquare_create,
-			 "Forward", logo_forward_create);
-}
 
 
 void* exercise_demo_runner(void *exo);
-void exercise_run_one_turtle(turtle_t t);
-int exercise_demo_is_running(void* ex);
-void exercise_demo_stop(void* ex);
+void exercise_run_one_entity(entity_t t);
 void exercise_run_stop(void* ex);
-exercise_t exercise_new(const char *mission, const char *template,const char *prof_solution, void* wo);
-void exercise_free(exercise_t e);
+
 
 static GMutex* demo_runner_running;
 static GMutex* run_runner_running;
@@ -42,12 +28,11 @@ static char *binary; // The name of the binary
 static pid_t*pids;
 
 /* Function launched in a separate thread to run the demo without locking the UI
- * It is in charge of starting a thread for each turtle to animate, and wait for their completion
+ * It is in charge of starting a thread for each entity to animate, and wait for their completion
  */
 void* exercise_demo_runner(void *exo) {
-  printf("Lancement de la demo\n");
 	int it;
-	turtle_t t;
+	entity_t t;
 	
 	//static Gthread* = NULL;
 	exercise_t e = exo;
@@ -116,32 +101,29 @@ void* exercise_demo_runner(void *exo) {
 	  free(filename);
 	}
 	
-	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_turtle(e->w_goal)));
+	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_entity(e->w_goal)));
 
 	
 	
 	/* Reset the goal world */
-	printf("Fin de la compilation du code prof\n");
 	world_free(e->w_goal);
 	e->w_goal = world_copy(e->w_init);
 	world_set_step_delay(e->w_goal,50); /* FIXME: should be configurable from UI */
-	printf("Réinitialisation du monde goal\n");
-	world_foreach_turtle(e->w_goal,it,t){
-	turtle_set_code(t,exercise_run_one_turtle);
-	turtle_set_binary(t, e->s_filename);
+	world_foreach_entity(e->w_goal,it,t){
+	entity_set_code(t,exercise_run_one_entity);
+	entity_set_binary(t, e->s_filename);
 	}
-	printf("Fin de la création des tortues\n");
 	
 	if (pids)
 		free(pids);
-	pids=malloc (sizeof(pid_t)*world_get_amount_turtle(e->w_goal));
+	pids=malloc (sizeof(pid_t)*world_get_amount_entity(e->w_goal));
 
 	/* Launch all the runners */
-	world_foreach_turtle(e->w_goal,it,t)
-	runners[it] = g_thread_create(turtle_run,t,1,NULL);
+	world_foreach_entity(e->w_goal,it,t)
+	runners[it] = g_thread_create(entity_run,t,1,NULL);
 
 	/* Wait the end of all runners */
-	world_foreach_turtle(e->w_goal,it,t)
+	world_foreach_entity(e->w_goal,it,t)
 	g_thread_join(runners[it]);
 
 	/* Re-enable the demo running button */
@@ -151,7 +133,6 @@ void* exercise_demo_runner(void *exo) {
 }
 
 void exercise_demo(void* exo) {
-  printf("Verrou : %p\n", &binary);
 	exercise_t e = exo;
 	demo_runner_running = (GMutex *)e->demo_runner_running;
 	int res = g_mutex_trylock(demo_runner_running);
@@ -160,7 +141,7 @@ void exercise_demo(void* exo) {
 		return;
 	}
 
-	/* Launch the demo (in a separate thread waiting for the completion of all turtles before re-enabling the button) */
+	/* Launch the demo (in a separate thread waiting for the completion of all entities before re-enabling the button) */
 	g_thread_create(exercise_demo_runner,e,0,NULL);
 }
 
@@ -196,7 +177,7 @@ void exercise_demo_stop(void* ex) {
 }
 
 
-/* Small thread in charge of listening everything that the user's turtle printf()s,
+/* Small thread in charge of listening everything that the user's entity printf()s,
  * and add it to the log console */
 void *exercise_run_log_listener(void *pipe) {
 	int fd = *(int*)pipe;
@@ -210,9 +191,9 @@ void *exercise_run_log_listener(void *pipe) {
 }
 
 
-/* Function in charge of running a particular turtle */
-void exercise_run_one_turtle(turtle_t t) {
-	//printf("Run turtle %p\n",t);
+/* Function in charge of running a particular entity */
+void exercise_run_one_entity(entity_t t) {
+	//printf("Run entity %p\n",t);
 	int f2c[2]; // father to child
 	int c2f[2]; // child to father
 	int cmd_f2c[2]; // father to child
@@ -224,11 +205,11 @@ void exercise_run_one_turtle(turtle_t t) {
 	int pid = fork();
 	int status;
 	if (pid < 0) {
-		CLE_log_append(strdup("Error while forking the turtle runner"));
+		CLE_log_append(strdup("Error while forking the entity runner"));
 		CLE_log_append(strdup(strerror(errno)));
 		return;
 	}
-	if (pid == 0) { // Child: run the turtle
+	if (pid == 0) { // Child: run the entity
 		close(f2c[1]);
 		close(c2f[0]);
 		close(cmd_f2c[1]);
@@ -245,13 +226,13 @@ void exercise_run_one_turtle(turtle_t t) {
 		close(c2f[1]);
 		close(cmd_f2c[0]);
 		close(cmd_c2f[1]);
-		execl(turtle_get_binary(t),"child",NULL);
+		execl(entity_get_binary(t),"child",NULL);
 		printf("OUCH execl failed!\n");
 		exit(2);
 	}// Father: listen what the child has to tell
 
-	printf("Turtle rank %d running child %s\n",turtle_get_rank(t),binary);
-	pids[turtle_get_rank(t)] = pid;
+	printf("Turtle rank %d running child %s\n",entity_get_rank(t),binary);
+	pids[entity_get_rank(t)] = pid;
 	close(f2c[0]);
 	close(c2f[1]);
 	close(cmd_f2c[0]);
@@ -270,31 +251,31 @@ void exercise_run_one_turtle(turtle_t t) {
 		sscanf(buff, "%d %lf", &cmd,&arg);
 		switch(cmd){
 		case 100:
-			fprintf(tochild,"%lf\n",turtle_get_x(t));
+			fprintf(tochild,"%lf\n",entity_get_x(t));
 			break;
 		case 101:
-			fprintf(tochild,"%lf\n",turtle_get_y(t));
+			fprintf(tochild,"%lf\n",entity_get_y(t));
 			break;
 		case 102:
-			fprintf(tochild,"%lf\n",turtle_get_heading(t));
+			fprintf(tochild,"%lf\n",entity_get_heading(t));
 			break;
 		case 103:
-			turtle_forward(t,arg);
+			entity_forward(t,arg);
 			break;
 		case 104:
-			turtle_backward(t,arg);
+			entity_backward(t,arg);
 			break;
 		case 105:
-			turtle_left(t,arg);
+			entity_left(t,arg);
 			break;
 		case 106:
-			turtle_right(t,arg);
+			entity_right(t,arg);
 			break;
 		case 107:
-			turtle_pen_up(t);
+			entity_pen_up(t);
 			break;
 		case 108:
-			turtle_pen_down(t);
+			entity_pen_down(t);
 			break;
 		default:
 			CLE_log_append(strdup("Oops, unknown order from child: "));
@@ -311,45 +292,45 @@ void exercise_run_one_turtle(turtle_t t) {
 		} else if (WTERMSIG(status)==SIGSEGV) {
 			CLE_log_append(strdup("The your code in a SIGSEGV. Check your pointers.\n"));
 		} else {
-			CLE_log_append(strdup("The child running the turtle got signaled!\n"));
+			CLE_log_append(strdup("The child running the entity got signaled!\n"));
 		}
 	} else if (WIFEXITED(status) && WEXITSTATUS(status) !=0) {
-		CLE_log_append(strdup("The child running the turtle returned with abnormal return value!\n"));
+		CLE_log_append(strdup("The child running the entity returned with abnormal return value!\n"));
 	}
 	g_thread_join(log_listener);
-	//printf("Done running turtle %p\n",t);
+	//printf("Done running entity %p\n",t);
 }
 /* Function launched in a separate thread to run the demo without locking the UI
- * It is in charge of starting a thread for each turtle to animate, and wait for their completion
+ * It is in charge of starting a thread for each entity to animate, and wait for their completion
  */
 void* exercise_run_runner(void *exo) {
 	int it;
-	turtle_t t;
+	entity_t t;
 
 	exercise_t e = exo;
 	run_runner_running = (GMutex *)e->run_runner_running;
-	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_turtle(e->w_curr)));
+	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_entity(e->w_curr)));
 
 	/* Reset the goal world */
 	world_free(e->w_curr);
 	e->w_curr = world_copy(e->w_init);
 	world_set_step_delay(e->w_curr,50); /* FIXME: should be configurable from UI */
-	world_foreach_turtle(e->w_curr,it,t){
-	turtle_set_code(t,exercise_run_one_turtle);
-	turtle_set_binary(t, exercise_get_binary(e));
+	world_foreach_entity(e->w_curr,it,t){
+	entity_set_code(t,exercise_run_one_entity);
+	entity_set_binary(t, exercise_get_binary(e));
 	}
 
 	if (pids)
 		free(pids);
-	pids=malloc (sizeof(pid_t)*world_get_amount_turtle(e->w_curr));
+	pids=malloc (sizeof(pid_t)*world_get_amount_entity(e->w_curr));
 
-	printf("Launch all turtles\n");
+	printf("Launch all entities\n");
 	/* Launch all the runners */
-	world_foreach_turtle(e->w_curr,it,t)
-	runners[it] = g_thread_create(turtle_run,t,1,NULL);
+	world_foreach_entity(e->w_curr,it,t)
+	runners[it] = g_thread_create(entity_run,t,1,NULL);
 
 	/* Wait the end of all runners */
-	world_foreach_turtle(e->w_curr,it,t)
+	world_foreach_entity(e->w_curr,it,t)
 	g_thread_join(runners[it]);
 
 	/* Re-enable the run running button */
@@ -374,7 +355,7 @@ void exercise_run_stop(void* ex) {
 	int it;
 	exercise_t e = ex;
 	if (pids)
-		for (it=0;it< world_get_amount_turtle(e->w_curr); it++)
+		for (it=0;it< world_get_amount_entity(e->w_curr); it++)
 			kill(pids[it],SIGTERM);
 }
 
@@ -448,14 +429,13 @@ void exercise_run(void* ex, char *source) {
 		int got;
 		while ((got = read(gcc[0],&buff,1023))>0) {
 			buff[got] = '\0';
-			printf("gcc error : %s", buff);
 			CLE_log_append(strdup(buff));
 		}
 		waitpid(pid,&status,0);
 	}
 	exercise_set_binary(e, binary);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-		/* Launch the exercise (in a separate thread waiting for the completion of all turtles before re-enabling the button) */
+		/* Launch the exercise (in a separate thread waiting for the completion of all entities before re-enabling the button) */
 		g_thread_create(exercise_run_runner,e,0,NULL);
 	} else  {
 		g_mutex_unlock(run_runner_running);
@@ -476,25 +456,18 @@ void exercise_run(void* ex, char *source) {
 exercise_t exercise_new(const char *mission, const char *template,
 		const char *prof_solution, void* wo) {
 	world_t w = (world_t)wo;
-	printf("Lancement de la construction de l'exercice\n");
 	exercise_t result = malloc(sizeof(struct s_exercise));
 	result->mission = mission;
 	result->template = template;
 	result->prof_solution = prof_solution;
 	result->s_filename = NULL;
 	result->binary=NULL;
-	printf("Creation des mutex\n");
 	result->demo_runner_running = g_mutex_new ();
 	result->run_runner_running = g_mutex_new ();
-	printf("Fin de la création des mutex %p\n", w);
 	result->w_init = (void*)w;
-	printf("COpie du premier monde\n");
 	result->w_curr = (void*)world_copy(w);
-	printf("COpie du second monde\n");
 	result->w_goal = world_copy(w);
-	printf("Fin de la copie des mondes\n");
 	(*(global_data->lesson->exercise_demo))(result);
-	printf("Fin de la création de l'exercice\n");
 	return result;
 }
 

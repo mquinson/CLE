@@ -1,5 +1,5 @@
 /*
- * turtle_userside.c: functions callable from user code
+ * entity_userside.c: functions callable from user code
  */
 #include <stdio.h>
 

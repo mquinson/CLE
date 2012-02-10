@@ -20,8 +20,8 @@ struct s_world {
 	int step_delay; /* amount of milliseconds to sleep after each redraw */
 
 	/* inhabitants */
-	int amount_turtle;
-	turtle_t *turtles;
+	int amount_entity;
+	entity_t *entities;
 
 	/* world state */
 	int amount_lines;
@@ -34,8 +34,8 @@ world_t world_new(double sizeX, double sizeY) {
 	res->sizeY = sizeY;
 	res->step_delay = 0;
 
-	res->amount_turtle = 0;
-	res->turtles = NULL;
+	res->amount_entity = 0;
+	res->entities = NULL;
 
 	res->amount_lines = 0;
 	res->lines = NULL;
@@ -43,9 +43,9 @@ world_t world_new(double sizeX, double sizeY) {
 }
 void world_free(world_t w) {
 	int it;
-	for (it=0;it<w->amount_turtle;it++)
-		turtle_free(w->turtles[it]);
-	free(w->turtles);
+	for (it=0;it<w->amount_entity;it++)
+		entity_free(w->entities[it]);
+	free(w->entities);
 	free(w->lines);
 	free(w);
 }
@@ -53,11 +53,11 @@ world_t world_copy(world_t w) {
 	int it;
 	world_t res = world_new(w->sizeX,w->sizeY);
 
-	res->amount_turtle = w->amount_turtle;
-	res->turtles = malloc(sizeof(turtle_t)*w->amount_turtle);
-	for (it=0;it<res->amount_turtle;it++) {
-		res->turtles[it] = turtle_copy(w->turtles[it]);
-		turtle_set_world(res->turtles[it], res);
+	res->amount_entity = w->amount_entity;
+	res->entities = malloc(sizeof(entity_t)*w->amount_entity);
+	for (it=0;it<res->amount_entity;it++) {
+		res->entities[it] = entity_copy(w->entities[it]);
+		entity_set_world(res->entities[it], res);
 	}
 
 	res->amount_lines = w->amount_lines;
@@ -68,9 +68,9 @@ world_t world_copy(world_t w) {
 int world_eq(world_t w1, world_t w2) {
 	int it;
 
-	if (w1->amount_turtle != w2->amount_turtle) return FALSE;
-	for (it=0; it<w1->amount_turtle; it++)
-		if (!turtle_eq(w1->turtles[it], w2->turtles[it]))
+	if (w1->amount_entity != w2->amount_entity) return FALSE;
+	for (it=0; it<w1->amount_entity; it++)
+		if (!entity_eq(w1->entities[it], w2->entities[it]))
 			return FALSE;
 
 	if (w1->amount_lines != w2->amount_lines) return FALSE;
@@ -83,8 +83,8 @@ int world_eq(world_t w1, world_t w2) {
 	return TRUE;
 }
 /* easy getters/setters */
-int world_get_amount_turtle(world_t w) {
-	return w->amount_turtle;
+int world_get_amount_entity(world_t w) {
+	return w->amount_entity;
 }
 double world_get_sizeX(world_t w) {
 	return w->sizeX;
@@ -98,11 +98,11 @@ void world_set_step_delay(world_t w, int step_delay) {
 
 
 /* */
-void world_turtle_add(world_t w, turtle_t t) {
-	w->turtles = realloc(w->turtles,sizeof(turtle_t)*(w->amount_turtle+1));
-	w->turtles[w->amount_turtle++] = t;
-	turtle_set_world(t,w);
-	turtle_set_rank(t,w->amount_turtle-1);
+void world_entity_add(world_t w, entity_t t) {
+	w->entities = realloc(w->entities,sizeof(entity_t)*(w->amount_entity+1));
+	w->entities[w->amount_entity++] = t;
+	entity_set_world(t,w);
+	entity_set_rank(t,w->amount_entity-1);
 }
 
 /* Functions related to turtle moving */
@@ -128,10 +128,10 @@ void world_line_add(world_t w, double x1, double y1, double x2, double y2){
 }
 
 /* Helper function to implement world_turtle_foreach  */
-turtle_t world_turtle_geti(world_t w, int i) {
-	if (i>=w->amount_turtle)
+entity_t world_entity_geti(world_t w, int i) {
+	if (i>=w->amount_entity)
 		return NULL;
-	return w->turtles[i];
+	return w->entities[i];
 }
 
 /* Functions related to drawing */
@@ -167,16 +167,16 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
     }
 
     /* Draw the turtles */
-    turtle_t t;
-    world_foreach_turtle(w,it,t) {
-    	cairo_move_to(cr, turtle_get_x(t), turtle_get_y(t));
-    	cairo_rotate(cr,turtle_get_heading(t));
+    entity_t t;
+    world_foreach_entity(w,it,t) {
+    	cairo_move_to(cr, entity_get_x(t), entity_get_y(t));
+    	cairo_rotate(cr,entity_get_heading(t));
     	cairo_rel_move_to(cr,10,0);
     	cairo_rel_line_to(cr,-10,-5);
     	cairo_rel_line_to(cr,0,10);
     	cairo_close_path(cr);
     	cairo_fill(cr);
-    	cairo_rotate(cr,-turtle_get_heading(t));
+    	cairo_rotate(cr,-entity_get_heading(t));
     }
 }
 

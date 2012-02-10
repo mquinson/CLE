@@ -1,4 +1,4 @@
-/* This file was automatically generated from logo/turtle_userside.c */
+/* This file was automatically generated from logo/entity_userside.c */
 /* DO NOT EDIT */
 
 #ifndef USERSIDE
@@ -64,5 +64,5 @@ static char *userside =
     "// ENDKILL\n"
 ;
 #endif /* USERSIDE */
-/* This file was automatically generated from logo/turtle_userside.c */
+/* This file was automatically generated from logo/entity_userside.c */
 /* DO NOT EDIT */

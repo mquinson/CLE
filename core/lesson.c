@@ -33,7 +33,7 @@ lesson_t lesson_new(const char *title, int amount, ...) {
 
 lesson_t lesson_from_file(char *filename) {
 	lesson_t res = NULL;
-	// BEGINKILL
+
 	char *error = NULL;
 	lesson_t (*lesson_loader)(void);
 	void *module;
@@ -86,7 +86,7 @@ lesson_t lesson_from_file(char *filename) {
 	}
 	res->dlmodule = module;
 	error:
-	// ENDKILL
+
 	free(filename);
 	return res;
 }
@@ -94,10 +94,10 @@ lesson_t lesson_from_file(char *filename) {
 void lesson_free(lesson_t l) {
 	if (!l)
 		return;
-	// BEGINKILL
 	if (l->dlmodule)
 		dlclose(l->dlmodule);
-	// ENDKILL
+	if(l->e_curr)
+	  (*(l->exercise_free))(l->e_curr);
 	free(l->exos);
 	free(l);
 }
