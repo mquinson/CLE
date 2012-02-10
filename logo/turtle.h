@@ -32,6 +32,8 @@ typedef void (*f_run_t)(turtle_t);
 
 void turtle_set_world(turtle_t t,world_t w);
 void turtle_set_code(turtle_t t, f_run_t run);
+void turtle_set_binary(turtle_t t, char* binary);
+char* turtle_get_binary(turtle_t y);
 void* turtle_run(void* t);
 
 /* get the turtle ranking in its world (to be called from world_add_turtle only) */

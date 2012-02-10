@@ -1,7 +1,6 @@
 /*
  * world.c: defines the data associated to a given world
  */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -136,9 +135,10 @@ turtle_t world_turtle_geti(world_t w, int i) {
 }
 
 /* Functions related to drawing */
-void world_redraw(world_t w, cairo_t *cr,int sizeX,int sizeY) {
+void world_redraw(void* we, void *c,int sizeX,int sizeY) {
 	int it;
-
+	world_t w = (world_t)we;
+	cairo_t *cr = (cairo_t*)c;
 	double ratioX = sizeX/w->sizeX;
 	double ratioY = sizeY/w->sizeY;
 	double ratio = ratioX>ratioY?ratioY:ratioX;

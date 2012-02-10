@@ -8,9 +8,7 @@
 #include <gtksourceview/gtksourcelanguagemanager.h>
 
 #include "CLE.h"
-#include "lessons/logo.h"
 #include "core/exercise.h"
-#include "logo/world_view.h"
 
 #include <string.h> /* strlen */
 #include <stdlib.h> /* free */
@@ -99,7 +97,8 @@ int main(int argc, char **argv) {
     gtk_builder_connect_signals( global_data->builder, global_data );
 
     /* load the exercise (must be done before we show the widget) */
-    CLE_set_lesson(lesson_main());
+      //printf("%s\n", getenv("CD"));
+    CLE_set_lesson(lesson_from_file(strdup("./logo.so")));
 //    CLE_set_lesson(lesson_from_file(strdup("./recursion.so")));
 
     /* Show window & start main loop */
@@ -120,7 +119,7 @@ void CLE_set_lesson(lesson_t l) {
 	if (global_data->lesson)
 		lesson_free(global_data->lesson);
 	global_data->lesson = l;
-	CLE_exercise_has_changed();
+	lesson_set_exo(global_data->lesson, 0);
 	/* Rebuild the menu */
 	GtkMenuItem *menu_lesson = CH_GET_OBJECT(global_data->builder,menu_lesson,GTK_MENU_ITEM);
 	GtkWidget *submenu = gtk_menu_new();
@@ -129,6 +128,7 @@ void CLE_set_lesson(lesson_t l) {
     gtk_menu_shell_append(GTK_MENU_SHELL(submenu), item);
     gtk_menu_append(GTK_MENU_SHELL(submenu),gtk_separator_menu_item_new());
     // The exercise entries
+    printf("Debut de la mise a jour des exos\n");
     int it;
     for (it=0;it<l->amount;it++) {
     	item = gtk_menu_item_new_with_label(l->exos[it].label);
@@ -139,8 +139,10 @@ void CLE_set_lesson(lesson_t l) {
     // Show it all
     gtk_widget_show_all(submenu);
 	gtk_menu_item_set_submenu(menu_lesson,submenu);
+	printf("Fin de la mis een place de la leçon\n");
 }
 void CLE_exercise_has_changed() {
+	printf("Debut du changement de l'excercice\n");
 	GtkSourceBuffer *sb;
 
 	CLE_log_clear();
@@ -154,6 +156,7 @@ void CLE_exercise_has_changed() {
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sb), global_data->lesson->e_curr->template, -1);
 	gtk_source_buffer_end_not_undoable_action (sb);
     gtk_text_buffer_set_modified (GTK_TEXT_BUFFER (sb), FALSE);
+    printf("Fin du chargement de l'exercice\n");
 }
 
 char *CLE_get_sourcecode() {
@@ -243,7 +246,7 @@ void CLE_log_clear() {
  * Actually, we simply invalidate the region, and it will get repainted the next time that
  *   the gtk_main_loop gets idle. So it should be called from an external thread.
  * */
-void world_ask_repaint(world_t w){
+void world_ask_repaint(void* w){
 	GtkWidget *widget = NULL;
 
 	if (!global_data || !global_data->lesson || !global_data->lesson->e_curr)
@@ -270,7 +273,7 @@ cb_expose_world( GtkWidget      *widget,
                  CLE_data_t     *data )
 {
     cairo_t *cr;
-    world_t w;
+    void* w;
     int sizeX,sizeY;
 
 	//printf("%p: received an expose event\n",g_thread_self());
@@ -286,8 +289,7 @@ cb_expose_world( GtkWidget      *widget,
     gdk_drawable_get_size(event->window,&sizeX,&sizeY);
 
     /* Ask the world to redraw as it should */
-    world_redraw(w,cr,sizeX,sizeY);
-
+    (*(global_data->lesson->world_repaint))(w,cr,sizeX,sizeY);
     /* Destroy cairo context */
     cairo_destroy( cr );
 

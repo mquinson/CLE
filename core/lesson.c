@@ -10,6 +10,8 @@
 
 #include "UI/CLE.h"
 #include "core/lesson.h"
+#include "core/exercise.h"
+
 
 lesson_t lesson_new(const char *title, int amount, ...) {
 	lesson_t res = malloc(sizeof(struct s_lesson));
@@ -25,7 +27,7 @@ lesson_t lesson_new(const char *title, int amount, ...) {
     	res->exos[it].rank = it;
     }
     va_end(ap);
-    res->e_curr = res->exos[0].exo_constructor();
+    res->e_curr=NULL;
     return res;
 }
 
@@ -48,11 +50,41 @@ lesson_t lesson_from_file(char *filename) {
 		perror(error);
 		goto error;
 	}
+	
 	/* Call that function */
 	res = (*lesson_loader)();
 	/* Save the module for further cleaning */
+	res->exercise_demo = dlsym(module, "exercise_demo");
+	error = dlerror();
+	if (error != NULL) {
+		perror(error);
+		goto error;
+	}
+	res->exercise_run = dlsym(module, "exercise_run");
+	error = dlerror();
+	if (error != NULL) {
+		perror(error);
+		goto error;
+	}
+	res->exercise_stop = dlsym(module, "exercise_stop");
+	error = dlerror();
+	if (error != NULL) {
+		perror(error);
+		goto error;
+	}
+	res->exercise_free = dlsym(module, "exercise_free");
+	error = dlerror();
+	if (error != NULL) {
+		perror(error);
+		goto error;
+	}
+	res->world_repaint = dlsym(module, "world_redraw");
+	error = dlerror();
+	if (error != NULL) {
+		perror(error);
+		goto error;
+	}
 	res->dlmodule = module;
-
 	error:
 	// ENDKILL
 	free(filename);
@@ -76,7 +108,7 @@ void lesson_set_exo(lesson_t l, int num) {
 		return;
 	}
 	if (l->e_curr)
-		exercise_free(l->e_curr);
+		(*(l->exercise_free))(l->e_curr);
 	l->e_curr = l->exos[num].exo_constructor();
 	CLE_exercise_has_changed();
 }

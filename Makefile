@@ -1,19 +1,18 @@
 DEPENDENCIES=gtksourceview-2.0 libglade-2.0
 
 CFLAGS=-g `pkg-config --cflags $(DEPENDENCIES)` -Werror -Wall -I.
-LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl
+LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl -lm
 
-PLUGINS=logo.so recursion.so
+PLUGINS=logo.so
 
 all: CLE $(PLUGINS)
 
 CORE=CLE.o callbacks.o exercise.o lesson.o
 LOGO=turtle.o world.o
-EXOS=logo_threesquare.o logo_circle.o logo_star.o logo.o
 
 EXO_HEADERS=logo/turtle.h logo/world.h lessons/logo.h
 
-CLE: $(CORE) $(LOGO) $(EXOS)
+CLE: $(CORE) $(LOGO)
 	gcc $^ -o CLE $(LDFLAGS)
 	
 CLE.o: UI/CLE.c UI/CLE.h	
@@ -34,27 +33,12 @@ exercise.o: core/exercise.c core/exercise.h
 lesson.o: core/lesson.c core/lesson.h core/exercise.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# The embeeded lesson
-#####################
-
-logo_threesquare.o: lessons/logo_threesquare.c $(EXO_HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
-logo_circle.o: lessons/logo_circle.c $(EXO_HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
-logo_star.o: lessons/logo_star.c $(EXO_HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
-logo.o: lessons/logo.c $(EXO_HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
 
 # A first lesson plugin
 #######################
 logo.so: lessons/logo.c $(EXO_HEADERS) \
-         lessons/logo_threesquare.c lessons/logo_circle.c lessons/logo_star.c
-	gcc -shared -fPIC -o $@ $^ -I.
-	 
-recursion.so: lessons/recursion.c $(EXO_HEADERS) \
-              lessons/rec_spiral.c lessons/rec_tree.c 
-	gcc -shared -fPIC -o $@ $^ -I.
+         lessons/logo_threesquare.c lessons/logo_forward.c logo/world.c
+	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
 
 
 clean: 

@@ -9,8 +9,8 @@
 #include <gtksourceview/gtksourceview.h>
 
 #include "UI/CLE.h"
-#include "logo/world.h"
 #include "core/exercise.h"
+#include "core/lesson.h"
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
@@ -20,7 +20,7 @@ cb_run_clicked(GtkButton *button) {
 	gtk_notebook_set_current_page(global_data->world_views,0);
 
 	// BEGINKILL
-	exercise_run(global_data->lesson->e_curr,source);
+	(*(global_data->lesson->exercise_run))(global_data->lesson->e_curr,source);
 	// REPLACE
 	///* Display what should be complied. You should replace this with your own code */
 	//CLE_log_append(strdup("Run clicked. We should compile that code:\n"));
@@ -31,15 +31,7 @@ cb_run_clicked(GtkButton *button) {
 G_MODULE_EXPORT void
 cb_stop_clicked(GtkButton *button) {
 	printf("Stop clicked\n");
-	if (exercise_demo_is_running()) {
-		exercise_demo_stop(global_data->lesson->e_curr);
-	} else {
-		// BEGINKILL
-		exercise_run_stop(global_data->lesson->e_curr);
-		// REPLACE
-		/* Your code to stop the run comes here */
-		// ENDKILL
-	}
+	(*(global_data->lesson->exercise_stop))(global_data->lesson);
 }
 
 G_MODULE_EXPORT void
@@ -47,7 +39,7 @@ cb_demo_clicked(GtkButton *button) {
 	/* Switch the notebook to the second page (which is #1), where the demo is */
 	gtk_notebook_set_current_page(global_data->world_views,1);
 
-	exercise_demo(global_data->lesson->e_curr);
+	(*(global_data->lesson->exercise_demo))(global_data->lesson->e_curr);
 }
 
 /* The about dialog window */

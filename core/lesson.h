@@ -22,6 +22,11 @@ typedef struct s_lesson {
 	int amount;
 	exercise_t e_curr;
 	exercise_desc *exos;
+	void (*world_repaint)(void*, void*, int, int);
+	void (*exercise_run)(void* , char*);
+	void (*exercise_stop)(void*);
+	void (*exercise_demo)(void*);
+	void (* exercise_free)(exercise_t);
 	// BEGINKILL
 	void *dlmodule;
 	// ENDKILL

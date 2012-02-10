@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "world.h"
 
 const double EPSILON = .0000001;
@@ -14,6 +15,7 @@ struct s_turtle {
 	double x,y;
 	double heading;
 	int pen_is_down;
+	char* binary;
 	f_run_t run_fct;
 };
 
@@ -25,10 +27,12 @@ turtle_t turtle_new(double x, double y, double heading) {
 	res->heading = heading / 180. * M_PI;
 	res->pen_is_down = 1;
 	res->run_fct = NULL;
+	res->binary=NULL;
 	return res;
 }
 
 void turtle_free(turtle_t t) {
+	free(t->binary);
 	free(t);
 }
 
@@ -45,6 +49,10 @@ turtle_t turtle_copy(turtle_t from) {
         res->heading = from->heading;
 	res->pen_is_down = from->pen_is_down;
 	res->rank = from->rank;
+	if(from->binary)
+	  res->binary = strdup(from->binary);
+	else
+	  res->binary=NULL;
 	return res;
 }
 
@@ -96,6 +104,17 @@ void turtle_set_world(turtle_t t,world_t w) {
 void turtle_set_code(turtle_t t, f_run_t run) {
 	t->run_fct = run;
 }
+
+void turtle_set_binary(turtle_t t, char* binary){
+  if(t->binary)
+    free(t->binary);
+      t->binary = strdup(binary);
+}
+
+char* turtle_get_binary(turtle_t t){
+  return t->binary;
+}
+
 /* Run a given turtle. Funcky prototype so that it can run as separate thread */
 void* turtle_run(void *data) {
 	turtle_t t = data;
