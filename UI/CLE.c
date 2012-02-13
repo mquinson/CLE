@@ -116,7 +116,7 @@ void CLE_set_lesson(lesson_t l) {
 	if (l==NULL) /* error while loading? */
 		return;
 	/* Change the data model */
-	if (global_data->lesson)
+	if(global_data->lesson)
 		lesson_free(global_data->lesson);
 	global_data->lesson = l;
 	lesson_set_exo(global_data->lesson, 0);

@@ -94,10 +94,10 @@ lesson_t lesson_from_file(char *filename) {
 void lesson_free(lesson_t l) {
 	if (!l)
 		return;
-	if (l->dlmodule)
-		dlclose(l->dlmodule);
 	if(l->e_curr)
 	  (*(l->exercise_free))(l->e_curr);
+	if (l->dlmodule)
+		dlclose(l->dlmodule);
 	free(l->exos);
 	free(l);
 }
