@@ -13,6 +13,11 @@ typedef struct entity{
 	double ang;
 }entity;
 
+typedef struct exercise_desc{
+  char* exerciseName;
+  char* exerciseConstructor;
+}exercise_desc;
+
 typedef struct exo_content{
 	world w;
 	entity e;
@@ -25,5 +30,11 @@ typedef struct exo_content{
 	int codeProfSize;
 	char** codeProf;
 }exo_content;
+
+typedef struct lesson_content{
+	char* lesson_name;
+	int amount;
+	exercise_desc** exercises;
+}lesson_content;
 
 #endif

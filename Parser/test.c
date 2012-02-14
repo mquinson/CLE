@@ -10,7 +10,7 @@
 */
 
   /*BEGIN TEMPLATE*/
-
+  /*BEGIN SOLUTION*/
 void square(int size) {
 	int i;
 	for (i=0;i<4;i++) {
@@ -24,6 +24,6 @@ void run (){
 	square(60);
 	square(30);
 }
-/*BEGIN SOLUTION*/
+
 /*END SOLUTION*/
 /*END TEMPLATE*/
