@@ -34,7 +34,7 @@ lesson.o: core/lesson.c core/lesson.h core/exercise.h
 # A first lesson plugin
 #######################
 logo.so: logo/logo.c $(LOGO_EXO_HEADERS) \
-         logo/logo_threesquare.c logo/logo_forward.c logo/world.c logo/entity.c logo/exercise.c
+         logo/logo_threesquare.c logo/logo_forward.c logo/world.c logo/entity.c logo/exercise.c logo/logo_square.c
 	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
 	
 fork.so: fork/fork.c fork/teststrace.c $(FORK_EXO_HEADERS)\

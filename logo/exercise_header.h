@@ -9,5 +9,6 @@
  
 exercise_t logo_threesquare_create(void);
 exercise_t logo_forward_create(void);
+exercise_t logo_square_create(void);
 
 #endif
