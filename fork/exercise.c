@@ -31,6 +31,7 @@ static GMutex* demo_runner_running;
 static GMutex* run_runner_running;
 static char *binary; // The name of the binary
 static pid_t*pids;
+tree_fork *tree_c=NULL,*tree_p=NULL;
 
 /* Function launched in a separate thread to run the demo without locking the UI
  * It is in charge of starting a thread for each turtle to animate, and wait for their completion
@@ -150,6 +151,9 @@ void* exercise_demo_runner(void *exo) {
 		
 		param_runner *pr= allocate_param_runner(t,fd[0]);
 		entity_fork_run(pr);
+		if(tree_p!=NULL)
+			free_tree_fork(tree_p);
+		tree_p=pr->racine;
 		//runners[it] = g_thread_create(entity_test_run,pr,1,NULL);
 
 		/* Wait the end of all runners */
@@ -407,6 +411,9 @@ void* exercise_run_runner(void *exo) {
 		
 		param_runner *pr= allocate_param_runner(t,fd[0]);
 		entity_fork_run(pr);
+		if(tree_c!=NULL)
+			free_tree_fork(tree_c);
+		tree_c = pr->racine;
 		//runners[it] = g_thread_create(entity_test_run,pr,1,NULL);
 
 		/* Wait the end of all runners */
