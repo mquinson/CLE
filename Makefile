@@ -76,11 +76,6 @@ fork/entity_userside.h: fork/entity_userside.c
 	echo "/* This file was automatically generated from logo/turtle_userside.c */" >> $@
 	echo "/* DO NOT EDIT */" >> $@
 	
-# create fifo
-fifo :
-	mkdir res
-	mkfifo res/lala
-
 template: CLE-0.0.tar.gz
 CLE-0.0.tar.gz: CLE projet-1011-CLE.pdf Makefile CLE.glade $(shell find -name '*.[ch]')
 	rm -rf CLE-0.0
