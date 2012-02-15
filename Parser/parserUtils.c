@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "parserUtils.h"
 #include "baliseProcess.h"
+#include "generate.h"
 
 
 static char* begin_template_balise = "/*BEGIN TEMPLATE*/";
@@ -221,9 +222,12 @@ void constructLesson(lesson_content* lesson, char** args)
   }
 }
 
-void parseLessonFile(lesson_content *lesson, char* filename)
+void parseLessonFile(lesson_content *lesson, exo_content *exo)
 {
-  int fd = open(filename, O_RDONLY);
+  lesson->filename= malloc(sizeof(char)*(strlen(exo->lesson_name)*2+4));
+  sprintf(lesson->filename, "%s/%s.c", exo->lesson_name, exo->lesson_name);
+  printf("Fichier lesson : %s\n", lesson->filename);
+  int fd = open(lesson->filename, O_RDONLY);
   if(fd==0)
   {
       printf("Impossible de charger le ficheir de leçon. Abandon.\n");
@@ -345,7 +349,36 @@ char** parseToArglist(char* arg)
       *lastBound = '\0';
       result[3 + i*2] = strdup(firstBound);
     }
-    for(i=0; i< (amount*2)+2; ++i)
-      printf("%s\n", result[i]);
     return result;
+}
+
+
+exercise_desc *generateExerciseDescriptor(exo_content *ex)
+{
+  exercise_desc *result = malloc(sizeof(exercise_desc));
+  result->exerciseName = strdup(ex->exercise_name);
+  char* constructor = malloc(sizeof(char)*(strlen(ex->lesson_name) + strlen(ex->exercise_name) + sizeof("create")+3));
+  sprintf(constructor, "%s_%s_create", ex->lesson_name, ex->exercise_name);
+  result->exerciseConstructor=constructor;
+  return result;
+}
+
+
+void addToLesson(exo_content *ex, lesson_content *lesson)
+{  
+  int i;
+  for(i=0; i< lesson->amount; ++i)
+  {
+    if(!strcmp(lesson->exercises[i]->exerciseConstructor, ex->descriptor->exerciseConstructor))
+      return;
+  }
+  exercise_desc** temp = malloc(sizeof(exercise_desc*)*(lesson->amount+1));
+  for(i=0; i< lesson->amount; ++i)
+  {
+   temp[i] = lesson->exercises[i];
+  }
+  free(lesson->exercises);
+  temp[lesson->amount]= ex->descriptor;
+  lesson->exercises=temp;
+  ++(lesson->amount);
 }

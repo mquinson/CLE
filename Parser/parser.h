@@ -29,10 +29,12 @@ typedef struct exo_content{
 	char** codeEleve;
 	int codeProfSize;
 	char** codeProf;
+	exercise_desc* descriptor;
 }exo_content;
 
 typedef struct lesson_content{
 	char* lesson_name;
+	char* filename;
 	int amount;
 	exercise_desc** exercises;
 }lesson_content;

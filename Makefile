@@ -2,6 +2,7 @@ DEPENDENCIES=gtksourceview-2.0 libglade-2.0
 
 CFLAGS=-g `pkg-config --cflags $(DEPENDENCIES)` -Werror -Wall -I.
 LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl -lm
+PARSER_CFLAGS=-g -Werror -Wall -I.
 
 CC = gcc
 PLUGINS=logo.so fork.so
@@ -12,7 +13,7 @@ LOGO_CORE_SOURCE = logo/world.c logo/entity.c logo/exercise.c
 FORK_EXO_SOURCE = $(wildcard fork/fork_*.c)
 FORK_CORE_SOURCE = fork/teststrace.c fork/world.c fork/entity.c fork/exercise.c
 
-all: CLE $(PLUGINS)
+all: CLE $(PLUGINS) parser
 
 CORE=CLE.o callbacks.o exercise.o lesson.o
 
@@ -21,6 +22,7 @@ LOGO_HEADERS=logo/entity.h logo/world.h logo/logo.h logo/exercise.h logo/exercis
 		
 FORK_HEADERS=fork/entity.h fork/world.h fork/fork.h fork/exercise.h fork/teststrace.h  fork/exercise_header.h\
 		fork/entity_userside.h fork/world_view.h fork/teststrace.h
+PARSER= parser.o generate.o baliseProcess.o parserUtils.o
 
 CLE: $(CORE)
 	gcc $^ -o CLE $(LDFLAGS)
@@ -37,6 +39,20 @@ lesson.o: core/lesson.c core/lesson.h core/exercise.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
+#Parser section
+###############
+parser: $(PARSER)
+	$(CC) -o parser $^
+parser.o: Parser/parser.c Parser/parser.h Parser/parserUtils.h Parser/generate.h
+	$(CC) $(PARSER_CFLAGS) -c $< -o $@
+generate.o: Parser/generate.c Parser/parser.h
+	$(CC) $(PARSER_CFLAGS) -c $< -o $@
+baliseProcess.o:Parser/baliseProcess.c Parser/parser.h
+	$(CC) $(PARSER_CFLAGS) -c $< -o $@
+parserUtils.o:Parser/parserUtils.c Parser/parserUtils.h Parser/baliseProcess.h Parser/generate.h
+	$(CC) $(PARSER_CFLAGS) -c $< -o $@
+
+
 # A first lesson plugin
 ########################$(LOGO_EXO_SOURCE)
 logo.so: logo/logo.c $(LOGO_HEADERS) $(LOGO_CORE_SOURCE) $(LOGO_EXO_SOURCE)
@@ -47,7 +63,7 @@ fork.so: fork/fork.c $(FORK_HEADERS) $(FORK_CORE_SOURCE) $(FORK_EXO_SOURCE)
 
 
 clean: 
-	rm -f *.o CLE $(PLUGINS)
+	rm -f *.o CLE $(PLUGINS) parser
 	
 
 logo/entity_userside.h: logo/entity_userside.c

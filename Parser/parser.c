@@ -23,8 +23,12 @@ int main(int argc, char** argv)
     printf("Erreur dans l'entree du parametre aucun parametre donne\n");
   }
   
-  //parseFile(&exoText, argv[1]);
-  //generateExerciseFile(&exoText);
-  parseLessonFile(&lesson, "../logo/logo.c");
+  parseFile(&exoText, argv[1]);
+  exoText.descriptor = generateExerciseDescriptor(&exoText);
+  parseLessonFile(&lesson, &exoText);
+  generateExerciseFile(&exoText, &lesson);
+  addToLesson(&exoText, &lesson);
+  generateLessonFile(&lesson);
+  generateExerciseHeader(&lesson);
   return 0;
 }
