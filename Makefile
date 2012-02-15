@@ -6,14 +6,20 @@ LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl -lm
 CC = gcc
 PLUGINS=logo.so fork.so
 
+LOGO_EXO_SOURCE = $(wildcard logo/logo_*.c)
+LOGO_CORE_SOURCE = logo/world.c logo/entity.c logo/exercise.c
+
+FORK_EXO_SOURCE = $(wildcard fork/fork_*.c)
+FORK_CORE_SOURCE = fork/teststrace.c fork/world.c fork/entity.c fork/exercise.c
+
 all: CLE $(PLUGINS)
 
 CORE=CLE.o callbacks.o exercise.o lesson.o
 
-LOGO_EXO_HEADERS=logo/entity.h logo/world.h logo/logo.h logo/exercise.h logo/exercise_header.h \
-		logo/entity_userside.h logo/world_view.h
+LOGO_HEADERS=logo/entity.h logo/world.h logo/logo.h logo/exercise.h logo/exercise_header.h \
+		logo/entity_userside.h logo/world_view.h 
 		
-FORK_EXO_HEADERS=fork/entity.h fork/world.h fork/fork.h fork/exercise.h fork/teststrace.h  fork/exercise_header.h\
+FORK_HEADERS=fork/entity.h fork/world.h fork/fork.h fork/exercise.h fork/teststrace.h  fork/exercise_header.h\
 		fork/entity_userside.h fork/world_view.h fork/teststrace.h
 
 CLE: $(CORE)
@@ -32,13 +38,11 @@ lesson.o: core/lesson.c core/lesson.h core/exercise.h
 
 
 # A first lesson plugin
-#######################
-logo.so: logo/logo.c $(LOGO_EXO_HEADERS) \
-         logo/logo_threesquare.c logo/logo_forward.c logo/world.c logo/entity.c logo/exercise.c logo/logo_square.c
+########################$(LOGO_EXO_SOURCE)
+logo.so: logo/logo.c $(LOGO_HEADERS) $(LOGO_CORE_SOURCE) $(LOGO_EXO_SOURCE)
 	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
 	
-fork.so: fork/fork.c fork/teststrace.c $(FORK_EXO_HEADERS)\
-         fork/fork_1fork.c fork/world.c fork/entity.c fork/exercise.c
+fork.so: fork/fork.c $(FORK_HEADERS) $(FORK_CORE_SOURCE) $(FORK_EXO_SOURCE)
 	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
 
 
@@ -50,12 +54,12 @@ logo/entity_userside.h: logo/entity_userside.c
 	echo "/* This file was automatically generated from logo/turtle_userside.c */" > $@
 	echo "/* DO NOT EDIT */" >> $@
 	echo >> $@
-	echo "#ifndef USERSIDE" >> $@
-	echo "#define USERSIDE" >> $@
+	echo "#ifndef LOGO_ENTITY_USERSIDE" >> $@
+	echo "#define LOGO_ENTITY_USERSIDE" >> $@
 	echo "static char *userside = " >> $@
 	./stringify.pl < logo/entity_userside.c >> $@
 	echo ";" >> $@
-	echo "#endif /* USERSIDE */" >> $@
+	echo "#endif /* LOGO_ENTITY_USERSIDE */" >> $@
 	echo "/* This file was automatically generated from logo/turtle_userside.c */" >> $@
 	echo "/* DO NOT EDIT */" >> $@
 	
@@ -63,12 +67,12 @@ fork/entity_userside.h: fork/entity_userside.c
 	echo "/* This file was automatically generated from logo/turtle_userside.c */" > $@
 	echo "/* DO NOT EDIT */" >> $@
 	echo >> $@
-	echo "#ifndef USERSIDE" >> $@
-	echo "#define USERSIDE" >> $@
+	echo "#ifndef FORK_ENTITY_USERSIDE" >> $@
+	echo "#define FORK_ENTITY_USERSIDE" >> $@
 	echo "static char *userside = " >> $@
 	./stringify.pl < fork/entity_userside.c >> $@
 	echo ";" >> $@
-	echo "#endif /* USERSIDE */" >> $@
+	echo "#endif /* FORK_ENTITY_USERSIDE */" >> $@
 	echo "/* This file was automatically generated from logo/turtle_userside.c */" >> $@
 	echo "/* DO NOT EDIT */" >> $@
 	
