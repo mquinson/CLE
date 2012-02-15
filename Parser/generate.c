@@ -49,8 +49,13 @@ int generateExerciseFile(exo_content *ex, lesson_content *lesson)
     if(!strcmp(lesson->exercises[i]->exerciseConstructor, ex->descriptor->exerciseConstructor))
       printf("L'exercice %s existe déjà dans la leçon %s\n", ex->exercise_name, ex->lesson_name);
   }
-  char* filename = malloc(sizeof(char)*(strlen(ex->exercise_name)+strlen(ex->lesson_name)*2+5));
-  sprintf(filename, "%s/%s_%s.c",ex->lesson_name, ex->lesson_name, ex->exercise_name);
+  char* filename = malloc(sizeof(char)*(strlen(ex->exercise_name)+strlen(lesson->lesson_name_file)*2+5));
+  sprintf(filename, "%s/%s_%s.c",lesson->lesson_name_file,lesson->lesson_name_file, ex->exercise_name);
+  for(;i<strlen(filename); ++i)
+  {
+    if(isalpha(filename[i]))
+      filename[i] = tolower(filename[i]);
+  }
   printf("Nom du fichier source a créer %s\n", filename);
   
   FILE* exerciseSrc = fopen(filename, "w");
@@ -63,11 +68,9 @@ int generateExerciseFile(exo_content *ex, lesson_content *lesson)
 int generateLessonFile(lesson_content* lesson)
 {
   FILE* file = fopen(lesson->filename, "w");
-  lesson->lesson_name[0] = tolower(lesson->lesson_name[0]);
-  fprintf(file, "#include \"%s/%s.h\"\n", lesson->lesson_name, lesson->lesson_name);
-  fprintf(file, "#include \"%s/exercise_header.h\"\n\n", lesson->lesson_name);
+  fprintf(file, "#include \"%s/%s.h\"\n", lesson->lesson_name_file, lesson->lesson_name_file);
+  fprintf(file, "#include \"%s/exercise_header.h\"\n\n", lesson->lesson_name_file);
   fprintf(file, "lesson_t lesson_main() {\n");
-  lesson->lesson_name[0] = toupper(lesson->lesson_name[0]);
   fprintf(file, "\treturn lesson_new(\"%s\",%d", lesson->lesson_name, lesson->amount);
   int i=0;
   for(; i< lesson->amount; ++i)
@@ -81,9 +84,8 @@ int generateLessonFile(lesson_content* lesson)
 
 int generateExerciseHeader(lesson_content* lesson)
 {
-  lesson->lesson_name[0] = tolower(lesson->lesson_name[0]);
-  char* filename = malloc(sizeof(char)*(strlen(lesson->lesson_name)+strlen("/exercise_headers.h")+1));
-  sprintf(filename, "%s/exercise_header.h", lesson->lesson_name);
+  char* filename = malloc(sizeof(char)*(strlen(lesson->lesson_name_file)+strlen("/exercise_headers.h")+1));
+  sprintf(filename, "%s/exercise_header.h", lesson->lesson_name_file);
   printf("%s\n", filename);
   FILE* file = fopen(filename, "w");
   fprintf(file, "#ifndef LOGO_EXERCISE_HEADER_H\n");

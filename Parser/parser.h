@@ -32,11 +32,13 @@ typedef struct exo_content{
 	exercise_desc* descriptor;
 }exo_content;
 
+/*Structure who contains informations of the lesson in which we try to insert the parder exercise*/
 typedef struct lesson_content{
-	char* lesson_name;
-	char* filename;
-	int amount;
-	exercise_desc** exercises;
+	char* lesson_name; //contain the name of lesson (extract of lesson_main function)
+	char* lesson_name_file; //contain the name of lesson which is used in filesytstem ( in lowercase)
+	char* filename; //contains the name of the file whiwh contains the lesson_main function
+	int amount; //Amount of exercise in lesson
+	exercise_desc** exercises; //array of exercise descriptor of the lesson's exercise
 }lesson_content;
 
 #endif

@@ -1,28 +1,18 @@
 /**
- * @lesson logo
- * @exercise square
+ * @lesson Logo
+ * @exercise Forward_Back
 * @world 200 200
 * 
-* @description lalalalalalalalalalallalalalalaallal la
-* 
-*on rajout un truc pour l'honneur
+* @description avancer de 40 puis reculer
 * @entity 100 100 0.
 */
 
   /*BEGIN TEMPLATE*/
   /*BEGIN SOLUTION*/
-void square(int size) {
-	int i;
-	for (i=0;i<4;i++) {
-		forward(size);
-		right(90);
-	}
-}
 
 void run (){
-	square(90);
-	square(60);
-	square(30);
+	forward(40);
+	backward(40);
 }
 
 /*END SOLUTION*/

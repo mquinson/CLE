@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "parser.h"
 #include "parserUtils.h"
@@ -224,8 +225,15 @@ void constructLesson(lesson_content* lesson, char** args)
 
 void parseLessonFile(lesson_content *lesson, exo_content *exo)
 {
-  lesson->filename= malloc(sizeof(char)*(strlen(exo->lesson_name)*2+4));
-  sprintf(lesson->filename, "%s/%s.c", exo->lesson_name, exo->lesson_name);
+  lesson->lesson_name_file = strdup(exo->lesson_name);
+  int i=0;
+  for(;i<strlen(lesson->lesson_name_file); ++i)
+  {
+    if(isalpha(lesson->lesson_name_file[i]))
+      lesson->lesson_name_file[i] = tolower(lesson->lesson_name_file[i]);
+  }
+  lesson->filename= malloc(sizeof(char)*(strlen(lesson->lesson_name_file)*2+4));
+  sprintf(lesson->filename, "%s/%s.c", lesson->lesson_name_file, lesson->lesson_name_file);
   printf("Fichier lesson : %s\n", lesson->filename);
   int fd = open(lesson->filename, O_RDONLY);
   if(fd==0)

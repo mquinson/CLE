@@ -13,7 +13,6 @@
 void parseFile(exo_content* exoText, const char* filename);
 void parseLessonFile(lesson_content *lesson, exo_content *exoText);
 void addToLesson(exo_content *exoText, lesson_content *lesson);
-
 exercise_desc* generateExerciseDescriptor(exo_content *ex);
 
 #endif
