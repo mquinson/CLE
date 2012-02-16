@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "parser.h"
+#include "structUtility.h"
 
  
 void processWorldBalise(char* line, exo_content* ex)
@@ -15,7 +16,9 @@ void processWorldBalise(char* line, exo_content* ex)
      printf("Erreur lors du décriptage de la balise world\n");
      return;
    }
-    sscanf(line+decalage, "%d %d", &(ex->w.x), &(ex->w.y));
+   double x, y;
+    sscanf(line+decalage, "%lf %lf", &x, &y);
+    addWorldToExoContent(ex, newWorld(x,y));
 }
 
 void processEntityBalise(char* line, exo_content* ex)
@@ -28,37 +31,42 @@ void processEntityBalise(char* line, exo_content* ex)
      printf("Erreur lors du décriptage de la balise entity\n");
      return;
    }
-   sscanf(line+decalage,"%d %d %lf", &(ex->e.x), &(ex->e.y), &(ex->e.ang));
+   int x, y;
+   double ang;
+   sscanf(line+decalage,"%d %d %lf", &x, &y, &ang);
+   addEntityToExoContent(ex, newEntity(x,y,ang));
 }
 
 void processLessonBalise(char* line, exo_content* ex)
 {
-  int decalage=0;
-  char name[512];
-     while((line[decalage] == '\t' || line[decalage] == ' ') && line[decalage]!='\n')
-	++decalage;
-     if(line[decalage]=='\n')
+  char* firstChar=line;
+     while((*firstChar == '\t' || *firstChar == ' ') && *firstChar!='\n')
+	++firstChar;
+     if(*firstChar=='\n')
    {
      printf("Erreur lors du décriptage de la balise entity\n");
      return;
    }
-   sscanf(line+decalage, "%s", name);
-   ex->lesson_name = malloc(sizeof(char)*strlen(name)+1);
-   memcpy(ex->lesson_name, name, sizeof(char)*strlen(name)+1);
+   char* end = firstChar;
+   while(*end != '\n')
+     ++end;
+   *end='\0';
+   setLessonName(ex, firstChar);
 }
 
 void processExerciseBalise(char* line, exo_content* ex)
 {
-  int decalage=0;
-  char name[512];
-     while((line[decalage] == '\t' || line[decalage] == ' ') && line[decalage]!='\n')
-	++decalage;
-     if(line[decalage]=='\n')
+  char* firstChar=line;
+     while((*firstChar == '\t' || *firstChar == ' ') && *firstChar!='\n')
+	++firstChar;
+     if(*firstChar=='\n')
    {
      printf("Erreur lors du décriptage de la balise entity\n");
      return;
    }
-   sscanf(line+decalage, "%s", name);
-   ex->exercise_name = malloc(sizeof(char)*strlen(name)+1);
-   memcpy(ex->exercise_name, name, sizeof(char)*strlen(name)+1);
+   char* end = firstChar;
+   while(*end != '\n')
+     ++end;
+   *end='\0';
+   setExerciseName(ex, firstChar);
 }

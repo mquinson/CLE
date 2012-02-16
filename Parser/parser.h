@@ -3,8 +3,8 @@
  
  
 typedef struct world{
-	int x;
-	int y;
+	double x;
+	double y;
 }world;
 
 typedef struct entity{
@@ -19,10 +19,11 @@ typedef struct exercise_desc{
 }exercise_desc;
 
 typedef struct exo_content{
-	world w;
-	entity e;
+	world *w;
+	entity *e;
 	char* lesson_name;
 	char* exercise_name;
+	char* exercise_file_name;
 	int descriptionSize;
 	char** description;
 	int codeEleveSize;

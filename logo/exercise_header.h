@@ -7,7 +7,7 @@
 exercise_t logo_threesquare_create(void);
 exercise_t logo_forward_create(void);
 exercise_t logo_square_create(void);
-exercise_t logo_One_create(void);
-exercise_t logo_Forward_Back_create(void);
+exercise_t logo_one_create(void);
+exercise_t logo_forward_back_create(void);
 
 #endif

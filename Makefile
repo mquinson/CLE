@@ -22,7 +22,7 @@ LOGO_HEADERS=logo/entity.h logo/world.h logo/logo.h logo/exercise.h logo/exercis
 		
 FORK_HEADERS=fork/entity.h fork/world.h fork/fork.h fork/exercise.h fork/teststrace.h  fork/exercise_header.h\
 		fork/entity_userside.h fork/world_view.h fork/teststrace.h
-PARSER= parser.o generate.o baliseProcess.o parserUtils.o
+PARSER= parser.o generate.o baliseProcess.o parserUtils.o structUtility.o
 
 CLE: $(CORE)
 	gcc $^ -o CLE $(LDFLAGS)
@@ -43,13 +43,15 @@ lesson.o: core/lesson.c core/lesson.h core/exercise.h
 ###############
 parser: $(PARSER)
 	$(CC) -o parser $^
-parser.o: Parser/parser.c Parser/parser.h Parser/parserUtils.h Parser/generate.h
+parser.o: Parser/parser.c Parser/parser.h Parser/parserUtils.h Parser/generate.h Parser/structUtility.h
 	$(CC) $(PARSER_CFLAGS) -c $< -o $@
-generate.o: Parser/generate.c Parser/parser.h
+generate.o: Parser/generate.c Parser/parser.h Parser/structUtility.h
 	$(CC) $(PARSER_CFLAGS) -c $< -o $@
-baliseProcess.o:Parser/baliseProcess.c Parser/parser.h
+baliseProcess.o:Parser/baliseProcess.c Parser/parser.h Parser/structUtility.h
 	$(CC) $(PARSER_CFLAGS) -c $< -o $@
-parserUtils.o:Parser/parserUtils.c Parser/parserUtils.h Parser/baliseProcess.h Parser/generate.h
+parserUtils.o:Parser/parserUtils.c Parser/parserUtils.h Parser/baliseProcess.h Parser/generate.h Parser/structUtility.h
+	$(CC) $(PARSER_CFLAGS) -c $< -o $@
+structUtility.o: Parser/structUtility.c Parser/structUtility.h Parser/parser.h
 	$(CC) $(PARSER_CFLAGS) -c $< -o $@
 
 

@@ -9,6 +9,7 @@
 
 #include "parser.h"
 #include "parserUtils.h"
+#include "structUtility.h"
 #include "baliseProcess.h"
 #include "generate.h"
 
@@ -96,8 +97,7 @@ void parseDescription(exo_content *exoText, char* line)
     else
     {
       line[strlen(line)-1]='\0';
-      exoText->description[exoText->descriptionSize]= strdup(line);
-      ++(exoText->descriptionSize);
+      addDescription(exoText, line);
       return;
     }
   }
@@ -126,11 +126,13 @@ void parseDescription(exo_content *exoText, char* line)
        break;
        
      case DESCRIPTION_BALISE:
-       if(*(line+decalage+strlen(description_balise)) == ' ')
-	 ++decalage;
+       line+=decalage+strlen(description_balise);
+       if(*line == ' ')
+	 ++line;
+       if(strlen(line)==0)
+	  break;
        line[strlen(line)-1]='\0';
-       exoText->description[exoText->descriptionSize]= strdup(line+decalage+strlen(description_balise));
-       ++(exoText->descriptionSize);
+       addDescription(exoText, line);
        exercise_description=1;
        break;
        
@@ -195,14 +197,14 @@ void parseFile(exo_content* exoText, const char* filename)
     parseLine(exoText, buff);
     if(!description)
     {
+      if(buff[0]=='\0')
+	continue;
       buff[strlen(buff)-1]='\0';
       if(template && !solution)
       {
-	exoText->codeEleve[exoText->codeEleveSize]=strdup(buff);
-	++(exoText->codeEleveSize);
+	addCodeEleve(exoText, buff);
       }
-      exoText->codeProf[exoText->codeProfSize]=strdup(buff);
-	++(exoText->codeProfSize);
+      addCodeProf(exoText, buff);
     }
   }
   fclose(file);
@@ -210,41 +212,33 @@ void parseFile(exo_content* exoText, const char* filename)
 
 void constructLesson(lesson_content* lesson, char** args)
 {
-  lesson->lesson_name = args[0];
-  lesson->amount = strtol(args[1], NULL, 10);
-  lesson->exercises = malloc(sizeof(exercise_desc*)*lesson->amount);
+  generateLessonFromName(lesson,  args[0]);
+  int amount = strtol(args[1], NULL, 10);
   int i;
-  for(i=0; i< lesson->amount; ++i)
+  for(i=0; i< amount; ++i)
   {
-    exercise_desc *temp = malloc(sizeof(exercise_desc));
-    temp->exerciseName = args[2+ i*2];
-    temp->exerciseConstructor = args[3+2*i];
-    lesson->exercises[i]=temp;
+    exercise_desc *temp = newExerciseDescriptor(args[2+ i*2],args[3+2*i]);
+    addExerciseToLesson(lesson, temp);
   }
 }
 
 void parseLessonFile(lesson_content *lesson, exo_content *exo)
 {
-  lesson->lesson_name_file = strdup(exo->lesson_name);
-  int i=0;
-  for(;i<strlen(lesson->lesson_name_file); ++i)
-  {
-    if(isalpha(lesson->lesson_name_file[i]))
-      lesson->lesson_name_file[i] = tolower(lesson->lesson_name_file[i]);
-  }
-  lesson->filename= malloc(sizeof(char)*(strlen(lesson->lesson_name_file)*2+4));
-  sprintf(lesson->filename, "%s/%s.c", lesson->lesson_name_file, lesson->lesson_name_file);
-  printf("Fichier lesson : %s\n", lesson->filename);
-  int fd = open(lesson->filename, O_RDONLY);
+  char* filename= malloc(sizeof(char)*(strlen(exo->lesson_name)*2+4));
+  sprintf(filename, "%s/%s.c", exo->lesson_name, exo->lesson_name);
+  printf("Fichier lesson : %s\n", filename);
+  int fd = open(filename, O_RDONLY);
   if(fd==0)
   {
-      printf("Impossible de charger le ficheir de leçon. Abandon.\n");
+      printf("Impossible de charger le fichier de leçon. Abandon.\n");
       exit(1);
   }
   /*First we extract the arguments of lesson constructor*/
   char *content = extractLessonMain(fd);
   char** args = parseToArglist(content);
-  constructLesson(lesson, args); 
+  free(content);
+  close(fd);
+  constructLesson(lesson, args);
 }
 
 /*Be carefull, this function change pointer value*/
@@ -285,6 +279,7 @@ char* extractLessonMain(int fd)
     goToNextWorld(&temp);
     if(*temp == '\0')
     {
+      /*If we found a null caracter, it means that we are unable to pick up lesson_new function*/
       printf("Lesson_new n'a pu être trouver\n");
       return NULL;
     }
@@ -315,6 +310,7 @@ char* extractLessonMain(int fd)
     ++first_bound;
   }
   temp[indice]='\0';
+  free(result);
   return temp;
 }
 
@@ -363,30 +359,9 @@ char** parseToArglist(char* arg)
 
 exercise_desc *generateExerciseDescriptor(exo_content *ex)
 {
-  exercise_desc *result = malloc(sizeof(exercise_desc));
-  result->exerciseName = strdup(ex->exercise_name);
   char* constructor = malloc(sizeof(char)*(strlen(ex->lesson_name) + strlen(ex->exercise_name) + sizeof("create")+3));
   sprintf(constructor, "%s_%s_create", ex->lesson_name, ex->exercise_name);
-  result->exerciseConstructor=constructor;
-  return result;
-}
-
-
-void addToLesson(exo_content *ex, lesson_content *lesson)
-{  
-  int i;
-  for(i=0; i< lesson->amount; ++i)
-  {
-    if(!strcmp(lesson->exercises[i]->exerciseConstructor, ex->descriptor->exerciseConstructor))
-      return;
-  }
-  exercise_desc** temp = malloc(sizeof(exercise_desc*)*(lesson->amount+1));
-  for(i=0; i< lesson->amount; ++i)
-  {
-   temp[i] = lesson->exercises[i];
-  }
-  free(lesson->exercises);
-  temp[lesson->amount]= ex->descriptor;
-  lesson->exercises=temp;
-  ++(lesson->amount);
+  exercise_desc *result = newExerciseDescriptor(ex->exercise_name, constructor);
+  free(constructor);
+  return result; 
 }

@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 #include "parser.h"
+#include "structUtility.h"
 
 
 void printInclude(exo_content *ex, FILE* src)
@@ -27,13 +28,16 @@ void printLine(char** lines, int amount, FILE* src)
 
 void printExercise(exo_content *ex, FILE* src)
 {
-  fprintf(src, "exercise_t %s_%s_create(void) {\n", ex->lesson_name, ex->exercise_name);
-  fprintf(src, "\tworld_t w = world_new(%d,%d);\n", ex->w.x, ex->w.y);
-  fprintf(src, "\tworld_entity_add(w, entity_new(%d,%d,%lf));\n", ex->e.x, ex->e.y, ex->e.ang);
+  fprintf(src, "exercise_t %s_%s_create(void) {\n", ex->lesson_name, ex->exercise_file_name);
+  fprintf(src, "\tworld_t w = world_new(%lf,%lf);\n", ex->w->x, ex->w->y);
+  fprintf(src, "\tworld_entity_add(w, entity_new(%d,%d,%lf));\n", ex->e->x, ex->e->y, ex->e->ang);
   fprintf(src, "\texercise_t res = exercise_new(\n");
   printLine(ex->description, ex->descriptionSize, src);
   fprintf(src, ",");
-  printLine(ex->codeEleve, ex->codeEleveSize, src);
+  if(!(ex->codeEleveSize))
+    fprintf(src, "\"\\n\"");
+  else
+    printLine(ex->codeEleve, ex->codeEleveSize, src);
   fprintf(src, ",");
   printLine(ex->codeProf, ex->codeProfSize, src);
   fprintf(src, ", w);\n");
@@ -43,19 +47,9 @@ void printExercise(exo_content *ex, FILE* src)
 
 int generateExerciseFile(exo_content *ex, lesson_content *lesson)
 {
-  int i;
-  for(i=0; i< lesson->amount; ++i)
-  {
-    if(!strcmp(lesson->exercises[i]->exerciseConstructor, ex->descriptor->exerciseConstructor))
-      printf("L'exercice %s existe déjà dans la leçon %s\n", ex->exercise_name, ex->lesson_name);
-  }
   char* filename = malloc(sizeof(char)*(strlen(ex->exercise_name)+strlen(lesson->lesson_name_file)*2+5));
-  sprintf(filename, "%s/%s_%s.c",lesson->lesson_name_file,lesson->lesson_name_file, ex->exercise_name);
-  for(;i<strlen(filename); ++i)
-  {
-    if(isalpha(filename[i]))
-      filename[i] = tolower(filename[i]);
-  }
+  sprintf(filename, "%s/%s_%s.c",lesson->lesson_name_file,lesson->lesson_name_file, ex->exercise_file_name);
+  
   printf("Nom du fichier source a créer %s\n", filename);
   
   FILE* exerciseSrc = fopen(filename, "w");
@@ -75,7 +69,7 @@ int generateLessonFile(lesson_content* lesson)
   int i=0;
   for(; i< lesson->amount; ++i)
   {
-    fprintf(file, "\n,\t\t\t\"%s\", %s", lesson->exercises[i]->exerciseName, lesson->exercises[i]->exerciseConstructor);
+    fprintf(file, ",\n\t\t\t\"%s\", %s", lesson->exercises[i]->exerciseName, lesson->exercises[i]->exerciseConstructor);
   }
   fprintf(file, ");\n}");
   fclose(file);
