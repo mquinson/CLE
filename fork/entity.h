@@ -38,6 +38,7 @@ void entity_set_binary(entity_t t, char* binary);
 void entity_set_color(entity_t t, int *color);
 void entity_set_end(entity_t t,int end);
 char* entity_get_binary(entity_t y);
+int* entity_get_pen_color(entity_t y);
 void* entity_run(void* t);
 
 /* get the entity ranking in its world (to be called from world_add_entity only) */

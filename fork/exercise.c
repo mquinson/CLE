@@ -120,13 +120,12 @@ void* exercise_demo_runner(void *exo) {
 	world_set_step_delay(e->w_goal,50); /* FIXME: should be configurable from UI */
 	printf("Réinitialisation du monde goal\n");
 	t=entity_new(10.0, 120.0, 0.0);
-	/*world_foreach_entity(e->w_goal,it,t){
-	entity_set_code(t,exercise_run_one_entity);
-	entity_set_binary(t, e->s_filename);
-	}*/
 	//entity_set_code(t,exercise_run_one_entity);
 	entity_set_binary(t, e->s_filename);
 	entity_set_world(t,e->w_goal);
+	entity_free(world_entity_geti(e->w_goal,0));
+	world_decrease_amount_entity(e->w_goal);
+	world_entity_add(e->w_goal,t);
 	printf("Fin de la création des tortues\n");
 	
 	if (pids)
@@ -150,7 +149,7 @@ void* exercise_demo_runner(void *exo) {
 		/* Launch all the runners */
 		//world_foreach_entity(e->w_curr,it,t);
 		
-		param_runner *pr= allocate_param_runner(t,fd[0]);
+		param_runner *pr= allocate_param_runner(t,fd[0],e->w_goal);
 		entity_fork_run(pr);
 		if(tree_p!=NULL)
 			free_tree_fork(tree_p);
@@ -272,7 +271,7 @@ int tree_fork_nb_branch_up(tree_fork *tf){
 	return 1+tf->pos+tree_fork_nb_branch_up((tree_fork *)tf->f);
 }
 
-param_runner *allocate_param_runner(entity_t t,int fd){
+param_runner *allocate_param_runner(entity_t t,int fd,world_t w){
 	param_runner *pr=malloc(sizeof(param_runner));
 	pr->fd =fd;
 	pr->racine = allocate_tree_fork(NULL);
@@ -283,14 +282,15 @@ param_runner *allocate_param_runner(entity_t t,int fd){
 	pr->list_t[0]=t;
 	printf("null turtle : %d\n",t==NULL);
 	pr->list_pid = malloc(500*sizeof(int));
+	pr->w = w;
 	return pr;
 }
 
 void free_param_runner(param_runner *pr){
 	free(pr->list_pid);
-	int i;
-	for(i=0;i<pr->nb_t;i++)
-		entity_free(pr->list_t[i]);
+	/*int i;
+	for(i=1;i<pr->nb_t;i++)
+		entity_free(pr->list_t[i]);*/
 	free(pr->list_t);
 	free(pr->list_nodes_tree);
 	free(pr);
@@ -300,6 +300,7 @@ void add_entity(param_runner *pr,int pos_f,int pid_s){
 	/*printf("Tortue a dupliquer %d\n",pos_f);
 	printf("pos : %f %f\n",entity_get_x(pr->list_t[pos_f]),entity_get_y(pr->list_t[pos_f]));*/
 	pr->list_t[pr->nb_t] = entity_copy(pr->list_t[pos_f]);
+	world_entity_add(pr->w,pr->list_t[pr->nb_t]);
 	pr->list_pid[pr->nb_t] = pid_s;
 	entity_set_world(pr->list_t[pr->nb_t],entity_get_world(pr->list_t[pos_f]));
 	pr->nb_t++;
@@ -469,6 +470,9 @@ void* exercise_run_runner(void *exo) {
 	//entity_set_code(t,exercise_run_one_entity);
 	entity_set_binary(t, exercise_get_binary(e));
 	entity_set_world(t,e->w_curr);
+	entity_free(world_entity_geti(e->w_curr,0));
+	world_decrease_amount_entity(e->w_curr);
+	world_entity_add(e->w_curr,t);
 
 	/*Test strace*/
 	int fd[2];
@@ -488,7 +492,7 @@ void* exercise_run_runner(void *exo) {
 		/* Launch all the runners */
 		//world_foreach_entity(e->w_curr,it,t);
 		
-		param_runner *pr= allocate_param_runner(t,fd[0]);
+		param_runner *pr= allocate_param_runner(t,fd[0],e->w_curr);
 		entity_fork_run(pr);
 		if(tree_c!=NULL)
 			free_tree_fork(tree_c);

@@ -36,6 +36,7 @@ void entity_set_world(entity_t t,world_t w);
 void entity_set_code(entity_t t, f_run_t run);
 void entity_set_binary(entity_t t, char* binary);
 void entity_set_color(entity_t t, int *color);
+void entity_set_end(entity_t t,int end);
 char* entity_get_binary(entity_t y);
 void* entity_run(void* t);
 

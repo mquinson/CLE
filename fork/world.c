@@ -91,6 +91,10 @@ int world_eq(tree_fork *s,tree_fork *p,world_t wc, world_t wo) {
 int world_get_amount_entity(world_t w) {
 	return w->amount_entity;
 }
+
+void world_decrease_amount_entity(world_t w) {
+	w->amount_entity--;
+}
 double world_get_sizeX(world_t w) {
 	return w->sizeX;
 }
@@ -177,7 +181,10 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
 
     /* Draw the turtles */
     entity_t t;
-    world_foreach_entity(w,it,t) {
+    for(it=0;it<w->amount_entity;it++){
+    	t = w->entities[it];
+    	int *color = entity_get_pen_color(t);
+    	cairo_set_source_rgb( cr, color[0], color[1], color[2] );
     	cairo_move_to(cr, entity_get_x(t), entity_get_y(t));
     	cairo_rotate(cr,entity_get_heading(t));
     	cairo_rel_move_to(cr,10,0);
@@ -186,6 +193,6 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
     	cairo_close_path(cr);
     	cairo_fill(cr);
     	cairo_rotate(cr,-entity_get_heading(t));
-    }
+ 	}
 }
 

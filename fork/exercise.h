@@ -39,6 +39,7 @@ typedef struct{
 	tree_fork **list_nodes_tree;
 	int nb_t;
 	int fd;	
+	world_t w;
 }param_runner;
 
 tree_fork *allocate_tree_fork(tree_fork *tff);
@@ -48,7 +49,7 @@ void free_tree_fork(tree_fork *tf);
 
 int tree_fork_nb_branch_up(tree_fork *tf);
 
-param_runner *allocate_param_runner(entity_t t,int fd);
+param_runner *allocate_param_runner(entity_t t,int fd,world_t w);
 
 void free_param_runner(param_runner *pr);
 

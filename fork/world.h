@@ -20,6 +20,7 @@ int world_eq(tree_fork *s, tree_fork *p,world_t wc, world_t wo);
 
 /* easy getters/setters */
 int world_get_amount_entity(world_t w);
+void world_decrease_amount_entity(world_t w);
 void world_set_step_delay(world_t w, int step_delay);
 double world_get_sizeX(world_t w);
 double world_get_sizeY(world_t w);

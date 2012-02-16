@@ -15,7 +15,8 @@
 world_t world_new(double sizeX, double sizeY);
 void world_free(world_t w);
 world_t world_copy(world_t w);
-int world_eq(tree_fork *s, tree_fork *p);
+int tree_eq(tree_fork *s,tree_fork *p);
+int world_eq(tree_fork *s, tree_fork *p,world_t wc, world_t wo);
 
 /* easy getters/setters */
 int world_get_amount_entity(world_t w);

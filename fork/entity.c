@@ -139,6 +139,10 @@ char* entity_get_binary(entity_t t){
   return t->binary;
 }
 
+int *entity_get_pen_color(entity_t t) {
+	return t->pen_color;
+}
+
 /* Run a given turtle. Funcky prototype so that it can run as separate thread */
 void* entity_run(void *data) {
 	entity_t t = data;
