@@ -248,7 +248,7 @@ void CLE_log_clear() {
  * */
 void world_ask_repaint(void* w){
 	GtkWidget *widget = NULL;
-
+	
 	if (!global_data || !global_data->lesson || !global_data->lesson->e_curr)
 		return; /* not ready yet to repaint stuff: still in init process */
 
@@ -256,7 +256,6 @@ void world_ask_repaint(void* w){
 		widget = global_data->drawing_world;
 	else if (w == global_data->lesson->e_curr->w_goal)
 		widget = global_data->drawing_objective;
-
 	if (widget) {
 		gtk_widget_queue_draw(widget);
 		//printf("%p: ask redraw\n",g_thread_self());

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 #include "fork/world.h"
+#include "fork/entity.h"
 
 const double EPSILON = .0000001;
 
@@ -15,7 +16,9 @@ struct s_entity {
 	double x,y;
 	double heading;
 	int pen_is_down;
+	int *pen_color;
 	char* binary;
+	int end;
 	f_run_t run_fct;
 };
 
@@ -26,13 +29,19 @@ entity_t entity_new(double x, double y, double heading) {
 	res->y = y;
 	res->heading = heading / 180. * M_PI;
 	res->pen_is_down = 1;
+	res->pen_color = malloc(3*sizeof(int));
+	res->pen_color[0]=0;
+	res->pen_color[1]=0;
+	res->pen_color[2]=0;
 	res->run_fct = NULL;
 	res->binary=NULL;
+	res->end=0;
 	return res;
 }
 
 void entity_free(entity_t t) {
 	free(t->binary);
+	free(t->pen_color);
 	free(t);
 }
 
@@ -69,12 +78,15 @@ double entity_get_heading(entity_t t) {
 world_t entity_get_world(entity_t t) {
 	return t->world;
 }
+int entity_get_end(entity_t t) {
+	return t->end;
+}
 /* User API */
 static void move_to(entity_t t, double new_x, double new_y) {
 	/* FIXME: account for clipping */
 
 	if (t->pen_is_down)
-		world_line_add(t->world,t->x,t->y,new_x,new_y);
+		world_line_add(t->world,t->x,t->y,new_x,new_y,t->pen_color);
 	t->x = new_x;
 	t->y = new_y;
 }
@@ -111,6 +123,16 @@ void entity_set_binary(entity_t t, char* binary){
   if(t->binary)
     free(t->binary);
       t->binary = strdup(binary);
+}
+
+void entity_set_color(entity_t t, int *color) {
+	t->pen_color[0] = color[0];
+	t->pen_color[1] = color[1];
+	t->pen_color[2] = color[2];
+}
+
+void entity_set_end(entity_t t,int end) {
+	t->end =end;
 }
 
 char* entity_get_binary(entity_t t){

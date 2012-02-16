@@ -19,6 +19,7 @@ double entity_get_x(entity_t t);
 double entity_get_y(entity_t t);
 double entity_get_heading(entity_t t);
 world_t entity_get_world(entity_t t);
+int entity_get_end(entity_t t);
 
 /* user API */
 void entity_forward(entity_t t, double steps);
@@ -34,6 +35,7 @@ typedef void (*f_run_t)(entity_t);
 void entity_set_world(entity_t t,world_t w);
 void entity_set_code(entity_t t, f_run_t run);
 void entity_set_binary(entity_t t, char* binary);
+void entity_set_color(entity_t t, int *color);
 char* entity_get_binary(entity_t y);
 void* entity_run(void* t);
 

@@ -13,6 +13,7 @@
 #include "core/lesson.h"
 #include "fork/exercise.h"
 #include "fork/entity.h"
+#include "fork/world.h"
 #include "fork/entity_userside.h"
 #include "UI/CLE.h"
 
@@ -249,8 +250,9 @@ tree_fork *allocate_tree_fork(tree_fork *tff){
 	return tf;
 }
 
-void tree_fork_add_son(tree_fork *tf,param_runner *pr){
+void tree_fork_add_son(tree_fork *tf,param_runner *pr,int pid){
 	tree_fork *tfs = allocate_tree_fork(tf);
+	tfs->pid=pid;
 	tf->s[tf->nb_son]=(struct tree_fork *)tfs;
 	pr->list_nodes_tree[pr->nb_t]=tfs;
 	tf->nb_son++;
@@ -344,13 +346,14 @@ void *entity_fork_run(void *param){
       				action = build_again_action(list->lines[j]);
       				if(first){
       					pr->list_pid[0]=action->pid_father;
+      					pr->racine->pid=action->pid_father;
       					pr->nb_t++;
       					first=0;
       				}
       				if(!strcmp(action->call,"clone")){
       					//printf("Creation d'une tortue\n");
-      					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
-      					tree_fork_add_son(pr->list_nodes_tree[pos_f],pr);
+      					int i,pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
+      					tree_fork_add_son(pr->list_nodes_tree[pos_f],pr,action->pid_son);
       					//pr->list_nodes_tree[pr->nb_t]=allocate_tree_fork(pr->list_nodes_tree[pos_f]);
       					add_entity(pr, pos_f,action->pid_son);
       					/*printf("Nouvelle tortue %d\n",pr->nb_t-1);
@@ -360,6 +363,69 @@ void *entity_fork_run(void *param){
       					printf("Nouvelle tortue nb_branch %d\n",nb_branch);
       					entity_forward(pr->list_t[pr->nb_t-1], 30.0/pow(2,nb_branch-1));
       					entity_right(pr->list_t[pr->nb_t-1], 90);
+      					for(i=0;i<pr->nb_t;i++){
+							entity_forward(pr->list_t[i], 5);
+						}
+      				}
+      				if(!strcmp(action->call,"wait4") && action->begin){
+      					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
+      					int *color = malloc(3*sizeof(int));
+      					color[0]=1;
+      					color[1]=0;
+      					color[2]=1;
+      					entity_set_color(pr->list_t[pos_f],color);
+      					free(color);
+      				}
+      				if(!strcmp(action->call,"wait4") && action->end){
+      					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
+      					int *color = malloc(3*sizeof(int));
+      					color[0]=0;
+      					color[1]=0;
+      					color[2]=0;
+      					entity_set_color(pr->list_t[pos_f],color);
+      					if(action->pid_son!=0){
+      						int pos_s = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_son);	
+      						entity_t s = pr->list_t[pos_s];
+      						if(entity_get_end(s)==2){
+      							color[0]=1;
+      							color[1]=1;
+      							color[2]=1;
+      							entity_set_color(s,color);
+      							entity_set_end(s,1);
+      						}
+      					}
+      					free(color);
+      				}
+      				if(!strcmp(action->call,"exit_group") && action->end){
+      					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
+      					int *color = malloc(3*sizeof(int));
+      					tree_fork *gf = ((tree_fork *)pr->list_nodes_tree[pos_f]->f);
+      					int end;
+      					int pos_gf;
+      					if(gf==NULL){
+      						pos_gf = -1;
+      						end = 1;
+      					}
+      					else{
+      						pos_gf = find_pos_pid(pr->list_pid,pr->nb_t,gf->pid);
+      						end = entity_get_end(pr->list_t[pos_gf]);
+      					}
+      					if(end==1){
+      						color[0]=1;
+      						color[1]=1;
+      						color[2]=1;
+      						entity_set_color(pr->list_t[pos_f],color);
+      						entity_set_end(pr->list_t[pos_f],1);
+      						stop_zombies_son(pr,pos_f,color);
+      					}
+      					else if(end!=1){
+      						color[0]=1;
+      						color[1]=0;
+      						color[2]=0;
+      						entity_set_color(pr->list_t[pos_f],color);
+      						entity_set_end(pr->list_t[pos_f],2);
+      					}
+      					free(color);
       				}
       				free_action(action);
       			}
@@ -371,6 +437,19 @@ void *entity_fork_run(void *param){
     free(buf);
     //free(f);
     return NULL;
+}
+
+void stop_zombies_son(param_runner *pr,int pos_f,int *color){
+	int i;
+	for(i=0;i<pr->list_nodes_tree[pos_f]->nb_son;i++){
+    	int pos_s = find_pos_pid(pr->list_pid,pr->nb_t,((tree_fork *)pr->list_nodes_tree[pos_f]->s[i])->pid);
+      	entity_t s = pr->list_t[pos_s];
+      	if(entity_get_end(s)==2){
+      		entity_set_color(s,color);
+      		entity_set_end(s,1);
+      		stop_zombies_son(pr,pos_s,color);
+      	}
+    }
 }
  
 void* exercise_run_runner(void *exo) {
@@ -427,7 +506,7 @@ void* exercise_run_runner(void *exo) {
 		world_set_step_delay(e->w_curr,0);
 		printf("End of execution\n");
 
-		if (world_eq(e->w_curr,e->w_goal))
+		if (world_eq(tree_c,tree_p,e->w_curr,e->w_goal))
 			CLE_dialog_success();
 		else
 			CLE_dialog_failure("Your world differs from the goal");

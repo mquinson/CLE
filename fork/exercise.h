@@ -8,8 +8,7 @@
 #include <math.h>
 
 #include "fork/teststrace.h"
-#include "logo/world.h"
-#include "logo/entity.h"
+#include "fork/entity.h"
 #include "core/exercise.h"
 
 
@@ -30,6 +29,7 @@ typedef struct{
 	struct tree_fork **s;
 	int nb_son;
 	int pos;
+	int pid;
 }tree_fork;
 
 typedef struct{
@@ -42,7 +42,7 @@ typedef struct{
 }param_runner;
 
 tree_fork *allocate_tree_fork(tree_fork *tff);
-void tree_fork_add_son(tree_fork *tf,param_runner *pr);
+void tree_fork_add_son(tree_fork *tf,param_runner *pr,int pid);
 
 void free_tree_fork(tree_fork *tf);
 
@@ -56,6 +56,7 @@ void add_entity(param_runner *pr,int pos_f,int pid_s);
 
 int find_pos_pid(int *list_pid,int size,int pid);
 
+void stop_zombies_son(param_runner *pr,int pos_f,int *color);
 
 /* Running related functions */
 void exercise_run(void* e, char *source);

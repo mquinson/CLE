@@ -7,7 +7,6 @@
 
 #include "core/exercise.h"
  
-exercise_t logo_threesquare_create(void);
-exercise_t logo_forward_create(void);
+exercise_t fork_1fork_create(void);
 
 #endif

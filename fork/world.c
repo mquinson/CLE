@@ -13,6 +13,7 @@
 
 typedef struct s_line {
 	double x1,y1,x2,y2;
+	int color[3];
 } s_line_t;
 
 struct s_world {
@@ -65,20 +66,24 @@ world_t world_copy(world_t w) {
 	memcpy(res->lines,w->lines,sizeof(struct s_line)*w->amount_lines);
 	return res;
 }
-int world_eq(world_t w1, world_t w2) {
-	int it;
 
-	if (w1->amount_entity != w2->amount_entity) return FALSE;
-	for (it=0; it<w1->amount_entity; it++)
-		if (!entity_eq(w1->entities[it], w2->entities[it]))
+int tree_eq(tree_fork *s,tree_fork *p){
+	int i;
+	for(i=0;i<s->nb_son;i++){
+		if(((tree_fork *)s->s[i])->nb_son!=((tree_fork *)p->s[i])->nb_son || !tree_eq((tree_fork *)s->s[i],(tree_fork *)p->s[i]))
 			return FALSE;
+	}
+	return TRUE;
+}
 
-	if (w1->amount_lines != w2->amount_lines) return FALSE;
-	for (it=0;it<w1->amount_lines;it++) {
-		if (w1->lines[it].x1 != w2->lines[it].x1) return FALSE;
-		if (w1->lines[it].x2 != w2->lines[it].x2) return FALSE;
-		if (w1->lines[it].y1 != w2->lines[it].y1) return FALSE;
-		if (w1->lines[it].y2 != w2->lines[it].y2) return FALSE;
+int world_eq(tree_fork *s,tree_fork *p,world_t wc, world_t wo) {
+	if(!tree_eq(s,p)){
+		return FALSE;
+	}
+	int i;
+	for(i=0;i<wc->amount_entity;i++){
+		if(entity_get_end(wc->entities[i]) != entity_get_end(wo->entities[i]))
+			return FALSE;
 	}
 	return TRUE;
 }
@@ -106,16 +111,19 @@ void world_entity_add(world_t w, entity_t t) {
 }
 
 /* Functions related to turtle moving */
-void world_line_add(world_t w, double x1, double y1, double x2, double y2){
+void world_line_add(world_t w, double x1, double y1, double x2, double y2,int *color){
 	/* Locking: several turtles may be changing the world at the same time */
 	static GStaticMutex my_mutex = G_STATIC_MUTEX_INIT;
 	g_static_mutex_lock(&my_mutex);
-
+	
 	w->lines=realloc(w->lines,sizeof(struct s_line)*(w->amount_lines+1));
 	w->lines[w->amount_lines].x1 = x1;
 	w->lines[w->amount_lines].y1 = y1;
 	w->lines[w->amount_lines].x2 = x2;
 	w->lines[w->amount_lines].y2 = y2;
+	w->lines[w->amount_lines].color[0] = color[0];
+	w->lines[w->amount_lines].color[1] = color[1];
+	w->lines[w->amount_lines].color[2] = color[2];
 	w->amount_lines++; // Don't move it higher so that the drawer only see valid lines
 
 	g_static_mutex_unlock(&my_mutex);
@@ -161,6 +169,7 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
 
     /* Draw the lines */
     for (it=0;it<w->amount_lines;it++) {
+    	cairo_set_source_rgb( cr, w->lines[it].color[0], w->lines[it].color[1], w->lines[it].color[2] );
         cairo_move_to(cr, w->lines[it].x1, w->lines[it].y1);
     	cairo_line_to(cr, w->lines[it].x2, w->lines[it].y2);
     	cairo_stroke(cr);

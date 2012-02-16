@@ -187,8 +187,7 @@ action *parser(char *line){
 }
 
 void writing(int fds,char* name_prog){
-	mkfifo("res/lala", 438);
-	if(fork()==0){
+	if(!fork()){
   		creat("res/tmp.txt",0666);
   		int fdout = open("res/tmp.txt",O_WRONLY);
   		dup2(fdout,1);
@@ -308,7 +307,7 @@ void read_info(int fdl,int fdw){
 				/*sprintf(line,"%d : %s : %d",action->pid_father,action->call,action->pid_son);
 				printf("%s",line);*/
 				sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
-				if(action->end || !strcmp("wait4",action->call) || !strcmp("waitpid",action->call)){
+				if((action->end && (strcmp(action->call,"clone") || action->pid_son!=0))|| !strcmp("wait4",action->call) || !strcmp("waitpid",action->call)){
 					write(fdw,line,strlen(line));
 				}
 				write(fd,line,strlen(line));
@@ -326,29 +325,18 @@ void read_info(int fdl,int fdw){
 }
 
 void execute_proc(char *name_binary,int fd){
-	/*creat("res/test.txt",0666);
-	int i,fde=open("res/test.txt",O_WRONLY);
-	time_t start, finish;
-	start=time(NULL);
-	for(i=0;i<1000;i++){*/
-		creat("res",0666);
-		int fde[2];
-		pipe(fde);
-		if(!fork()){
-			close(fde[0]);
-			writing(fde[1],name_binary);
-			close(fde[1]);
-			//break;
-		}
-		else{
-			close(fde[1]);
-			read_info(fde[0],fd);
-			/*finish = time(NULL);
-			char *ok = malloc(50*sizeof(char));
-			sprintf(ok,"temps : %ld\n",finish-start);
-			write(fde,ok,strlen(ok));
-			free(ok);*/
-			close(fde[0]);
-		}
-	//}
+	/*if(!fork())
+		execlp("make","make","fifo", NULL);*/
+	int fde[2];
+	pipe(fde);
+	if(!fork()){
+		close(fde[0]);
+		writing(fde[1],name_binary);
+		close(fde[1]);
+	}
+	else{
+		close(fde[1]);
+		read_info(fde[0],fd);
+		close(fde[0]);
+	}
 }
