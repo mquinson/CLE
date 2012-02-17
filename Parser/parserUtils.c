@@ -181,7 +181,7 @@ void parseLine(exo_content *exoText, char* line)
 }
 
 
-void parseFile(exo_content* exoText, const char* filename)
+void parseFile(exo_content* exercise, const char* filename)
 {
   FILE* file = fopen(filename, "r");
   char* buff=NULL;
@@ -194,7 +194,7 @@ void parseFile(exo_content* exoText, const char* filename)
     if(buff[0]=='\n')
       continue;
     
-    parseLine(exoText, buff);
+    parseLine(exercise, buff);
     if(!description)
     {
       if(buff[0]=='\0')
@@ -202,24 +202,30 @@ void parseFile(exo_content* exoText, const char* filename)
       buff[strlen(buff)-1]='\0';
       if(template && !solution)
       {
-	addCodeEleve(exoText, buff);
+	addCodeEleve(exercise, buff);
       }
-      addCodeProf(exoText, buff);
+      addCodeProf(exercise, buff);
     }
   }
+  free(buff);
   fclose(file);
 }
 
 void constructLesson(lesson_content* lesson, char** args)
 {
   generateLessonFromName(lesson,  args[0]);
+  free(args[0]);
   int amount = strtol(args[1], NULL, 10);
+  free(args[1]);
   int i;
   for(i=0; i< amount; ++i)
   {
     exercise_desc *temp = newExerciseDescriptor(args[2+ i*2],args[3+2*i]);
+    free(args[2+i*2]);
+    free(args[3+i*2]);
     addExerciseToLesson(lesson, temp);
   }
+  free(args);
 }
 
 void parseLessonFile(lesson_content *lesson, exo_content *exo)
@@ -239,6 +245,7 @@ void parseLessonFile(lesson_content *lesson, exo_content *exo)
   free(content);
   close(fd);
   constructLesson(lesson, args);
+  free(filename);
 }
 
 /*Be carefull, this function change pointer value*/

@@ -56,6 +56,7 @@ int generateExerciseFile(exo_content *ex, lesson_content *lesson)
   printInclude(ex, exerciseSrc);
   printExercise(ex, exerciseSrc);
   fclose(exerciseSrc);
+  free(filename);
   return 0;
 }
 

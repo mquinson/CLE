@@ -30,7 +30,6 @@ typedef struct exo_content{
 	char** codeEleve;
 	int codeProfSize;
 	char** codeProf;
-	exercise_desc* descriptor;
 }exo_content;
 
 /*Structure who contains informations of the lesson in which we try to insert the parder exercise*/

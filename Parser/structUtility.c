@@ -122,13 +122,13 @@ void freeLessonContent(lesson_content* lesson)
   free(lesson);  
 }
 
-void addExerciseToLesson(lesson_content* lesson, exercise_desc* desc)
+int addExerciseToLesson(lesson_content* lesson, exercise_desc* desc)
 {
   int i;
   for(i=0; i< lesson->amount; ++i)
   {
     if(!strcmp(lesson->exercises[i]->exerciseConstructor, desc->exerciseConstructor))
-      return;
+      return 0;
   }
   
   exercise_desc** temp = malloc(sizeof(exercise_desc* )*(lesson->amount+1));
@@ -141,6 +141,7 @@ void addExerciseToLesson(lesson_content* lesson, exercise_desc* desc)
   temp[lesson->amount] = desc;
   lesson->exercises = temp;
   ++(lesson->amount);
+  return 1;
 }
 
 
@@ -159,7 +160,6 @@ exo_content* newVoidExoContent()
   result->codeEleve=NULL;
   result->codeProfSize=0;
   result->codeProf=NULL;
-  result->descriptor=NULL;
   return result;
 }
 
@@ -243,6 +243,33 @@ void setExerciseName(exo_content* ex, char* exercise_name)
   }
 }
 
+void freeExerciseContent(exo_content* ex)
+{
+  if(ex->w)
+    free(ex->w);
+  if(ex->e)
+    free(ex->e);
+  if(ex->lesson_name)
+    free(ex->lesson_name);
+  if(ex->exercise_file_name)
+    free(ex->exercise_file_name);
+  if(ex->exercise_name)
+    free(ex->exercise_name);
+  int i;
+  for(i=0; i< ex->descriptionSize; ++i)
+    free(ex->description[i]);
+  if(ex->description)
+    free(ex->description);
+  for(i=0; i< ex->codeEleveSize; ++i)
+    free(ex->codeEleve[i]);
+  if(ex->codeEleve)
+    free(ex->codeEleve);
+  for(i=0; i< ex->codeProfSize; ++i)
+    free(ex->codeProf[i]);
+  if(ex->codeProf)
+    free(ex->codeProf);
+  free(ex);
+}
 
 
 

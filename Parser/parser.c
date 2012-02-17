@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv)
 {
-  exo_content *exoText = newVoidExoContent();
+  exo_content *exercise = newVoidExoContent();
   lesson_content* lesson = newVoidLessonContent();
   
   if(argc < 2)
@@ -17,12 +17,15 @@ int main(int argc, char** argv)
     printf("Erreur dans l'entree du parametre aucun parametre donne\n");
   }
   
-  parseFile(exoText, argv[1]);
-  exoText->descriptor = generateExerciseDescriptor(exoText);
-  parseLessonFile(lesson, exoText);
-  generateExerciseFile(exoText, lesson);
-  addExerciseToLesson(lesson, exoText->descriptor);
+  parseFile(exercise, argv[1]);
+  exercise_desc* descrip = generateExerciseDescriptor(exercise);
+  parseLessonFile(lesson, exercise);
+  generateExerciseFile(exercise, lesson);
+  if(!addExerciseToLesson(lesson, descrip))
+    freeExerciseDescriptor(descrip);
   generateLessonFile(lesson);
   generateExerciseHeader(lesson);
+  freeLessonContent(lesson);
+  freeExerciseContent(exercise);
   return 0;
 }

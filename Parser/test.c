@@ -1,9 +1,9 @@
 /**
  * @lesson Logo
- * @exercise Forward_Back
+ * @exercise Forward_Back ou pas
 * @world 200 200
 * 
-* @description avancer de 40 puis reculer
+* @description avancer de 40 puis reculer ou pas
 * @entity 100 100 0.
 */
 
@@ -12,7 +12,6 @@
 
 void run (){
 	forward(40);
-	backward(40);
 }
 
 /*END SOLUTION*/
