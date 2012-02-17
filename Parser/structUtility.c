@@ -16,6 +16,8 @@ exercise_desc* newExerciseDescriptor(char* name, char* constructor)
   {
     if(isalpha(result->exerciseConstructor[i]))
       result->exerciseConstructor[i] = tolower(result->exerciseConstructor[i]);
+    if(result->exerciseConstructor[i]==' ')
+      result->exerciseConstructor[i]='_';
   }
   return result;
 }
@@ -240,6 +242,8 @@ void setExerciseName(exo_content* ex, char* exercise_name)
   {
     if(isalpha(ex->exercise_file_name[i]))
       ex->exercise_file_name[i] = tolower(ex->exercise_file_name[i]);
+    if(!isalnum(ex->exercise_file_name[i]))
+      ex->exercise_file_name[i]='_';
   }
 }
 
