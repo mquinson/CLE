@@ -104,13 +104,13 @@ void delete_line(list_lines *l, int pos){
 action *parser(char *line){
 	action *a = allocate_action();
 	int i=0,size = strlen(line),sizec=0;
-	char *num_pid_f = malloc(sizeof(int));
-	char *action = malloc(20*sizeof(char));
-	char *num_pid_s = malloc(sizeof(int));
+	char *num_pid_f = malloc(size*sizeof(char));
+	char *action = malloc(size*sizeof(char));
+	char *num_pid_s = malloc(size*sizeof(char));
 	int resumed=0;
 	
 	/**Read pid father*/
-	while(line[i]!=' ' && i<size){
+	while(line[i]!=' ' && i<size-1){
 		num_pid_f[i]=line[i];
 		i++;
 	}
@@ -213,7 +213,6 @@ void writing(int fds,char* name_prog){
 	  		free_action(action);
     	}
     	free(line);
-    	free(buffer);
     	free(buf);
     	close(fd);
   	}
@@ -325,8 +324,7 @@ void read_info(int fdl,int fdw){
 }
 
 void execute_proc(char *name_binary,int fd){
-	/*if(!fork())
-		execlp("make","make","fifo", NULL);*/
+	/*Tester si le fifo existe et creer le fifo si necessaire*/ 
 	int fde[2];
 	pipe(fde);
 	if(!fork()){
