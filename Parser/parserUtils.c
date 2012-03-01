@@ -145,20 +145,19 @@ void parseDescription(exo_content *exoText, char* line)
 
 void parseLine(exo_content *exoText, char* line)
 {
-  int decalage=0;
-  while(line[decalage] == '\t' || line[decalage] == ' ')
-    ++decalage;
+  while(*line == '\t' || *line == ' ')
+    ++line;
   if(!description)
   {
-    if(line[decalage]=='/')
+    if(line[0]=='/')
     {
-     if(line[1+decalage]=='*')
+     if(line[1]=='*')
      {
-       if(line[2+decalage]=='*')
+       if(line[2]=='*')
 	 description=1;
        else
        {
-	 if(parseBalise(line+decalage))
+	 if(parseBalise(line))
 	  line[0]='\0';
        }
      }
@@ -166,22 +165,22 @@ void parseLine(exo_content *exoText, char* line)
   }
   else
   {
-    if(line[decalage]=='*')
+    if(line[0]=='*')
     {
-      if(line[decalage+1]=='/')
+      if(line[1]=='/')
       {
-	line[decalage]='\0';
+	line[0]='\0';
 	description=0;
       }
       else
-	parseDescription(exoText, line+decalage+1);
+	parseDescription(exoText, ++line);
     }
   }
   
 }
 
 
-void parseFile(exo_content* exoText, const char* filename)
+void parseFile(exo_content* exercise, const char* filename)
 {
   FILE* file = fopen(filename, "r");
   char* buff=NULL;
@@ -194,7 +193,7 @@ void parseFile(exo_content* exoText, const char* filename)
     if(buff[0]=='\n')
       continue;
     
-    parseLine(exoText, buff);
+    parseLine(exercise, buff);
     if(!description)
     {
       if(buff[0]=='\0')
@@ -202,24 +201,30 @@ void parseFile(exo_content* exoText, const char* filename)
       buff[strlen(buff)-1]='\0';
       if(template && !solution)
       {
-	addCodeEleve(exoText, buff);
+	addCodeEleve(exercise, buff);
       }
-      addCodeProf(exoText, buff);
+      addCodeProf(exercise, buff);
     }
   }
+  free(buff);
   fclose(file);
 }
 
 void constructLesson(lesson_content* lesson, char** args)
 {
   generateLessonFromName(lesson,  args[0]);
+  free(args[0]);
   int amount = strtol(args[1], NULL, 10);
+  free(args[1]);
   int i;
   for(i=0; i< amount; ++i)
   {
     exercise_desc *temp = newExerciseDescriptor(args[2+ i*2],args[3+2*i]);
+    free(args[2+i*2]);
+    free(args[3+i*2]);
     addExerciseToLesson(lesson, temp);
   }
+  free(args);
 }
 
 void parseLessonFile(lesson_content *lesson, exo_content *exo)
@@ -239,6 +244,7 @@ void parseLessonFile(lesson_content *lesson, exo_content *exo)
   free(content);
   close(fd);
   constructLesson(lesson, args);
+  free(filename);
 }
 
 /*Be carefull, this function change pointer value*/
@@ -298,11 +304,28 @@ char* extractLessonMain(int fd)
     ++temp;
   *temp='\0';
   temp = malloc(sizeof(char)* (strlen(first_bound)+1));
+  for(i=0; i<strlen(first_bound)+1; ++i)
+    temp[i]='\0';
   int indice =0;
   /*Finally, we extract the arguments of lesson_new without space and tabulation*/
   while(*first_bound != '\0')
   {
-    if(*first_bound != ' ' && *first_bound !='\t')
+    /*If we find an '"' we donc suppress ' ' or '\t' in there*/
+    if(*first_bound == '"')
+    {
+      temp[indice] = *first_bound;
+      ++indice;
+      ++first_bound;
+      while(*first_bound != '"' && *first_bound != '\0')
+      {
+	temp[indice] = *first_bound;
+	++indice;
+	++first_bound;
+      }
+      temp[indice] = *first_bound;
+      ++indice;
+    }
+    else if(*first_bound != ' ' && *first_bound !='\t')
     {
        temp[indice] = *first_bound;
        ++indice;
@@ -317,13 +340,21 @@ char* extractLessonMain(int fd)
 void toNextComma(char** ptr)
 {
   while(**ptr != ',' && **ptr !='\0')
+  {
+    if(**ptr == '"')
+    {
+      ++(*ptr);
+      while(**ptr != '"' && **ptr !='\0')
+	++(*ptr);
+    }
     ++(*ptr);
+  }
 }
 
 char** parseToArglist(char* arg)
 {
     char* firstBound = arg+1;
-    char* lastBound = arg+1;
+    char* lastBound = arg;
     /*We start with the extraction of lesson_name*/
     toNextComma(&lastBound);
     *(lastBound-1)='\0';

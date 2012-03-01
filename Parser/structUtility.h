@@ -20,7 +20,7 @@ lesson_content* newVoidLessonContent();
 lesson_content* newLessonContent(char* name);
 void generateLessonFromName(lesson_content* lesson, char* name);
 void freeLessonContent(lesson_content* lesson);
-void addExerciseToLesson(lesson_content* lesson, exercise_desc* desc);
+int addExerciseToLesson(lesson_content* lesson, exercise_desc* desc);
 
 /*exo_content section*/
 exo_content* newVoidExoContent();
@@ -31,6 +31,7 @@ void addCodeEleve(exo_content* ex, char* codeEleve);
 void addCodeProf(exo_content* ex, char* codeProf);
 void setLessonName(exo_content* ex, char* lesson_name);
 void setExerciseName(exo_content* ex, char* exercise_name);
+void freeExerciseContent(exo_content* ex);
 
 
 #endif
