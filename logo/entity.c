@@ -121,7 +121,7 @@ void* entity_run(void *data) {
 	if (t->run_fct)
 		(*t->run_fct)(t);
 	else
-		printf("Not running the NULL run function for that entity");
+		printf("Not running the NULL run function for that entity\n");
 	return NULL;
 }
 /* get the entity ranking in its world (to be called from world_add_entity only) */

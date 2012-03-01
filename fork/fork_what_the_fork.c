@@ -9,8 +9,8 @@
  */
 exercise_t fork_what_the_fork_create(void) {
 	printf("Construction de l'exercise what_the_fork\n");
-	world_t w = world_new(200,200);
-	world_entity_add(w,entity_new(100,100,0.));
+	world_t w = world_new(400,400);
+	world_entity_add(w,entity_new(10.0, 300.0, 0.));
 	exercise_t res = exercise_new(
 			"Dans cet exercice, pries!!!!!!!!!!!!!\n",
 
@@ -18,8 +18,10 @@ exercise_t fork_what_the_fork_create(void) {
 			"  fork();\n"
 			"  fork();\n"
 			"  fork();\n"
+			"  fork();\n"
 			"}",
 			"void run() {\n"
+			"  fork();\n"
 			"  fork();\n"
 			"  fork();\n"
 			"  fork();\n"

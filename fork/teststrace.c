@@ -19,10 +19,10 @@ void free_action(action *a){
 action *build_again_action(char *line){
 	action *a = allocate_action();
 	int i=0,size = strlen(line),sizec=0;
-	char *data = malloc(20*sizeof(char));
+	char *data = malloc((size+1)*sizeof(char));
 	
 	/**Read begin*/
-	while(line[i]!='/' && i<size){
+	while(i<size && line[i]!='/'){
 		data[i]=line[i];
 		i++;
 	}
@@ -31,7 +31,7 @@ action *build_again_action(char *line){
 	sizec=i+1;
 	i=0;
 	/**Read pid_father*/
-	while(line[sizec+i]!='/' && i<size-sizec){
+	while(i<size-sizec && line[sizec+i]!='/'){
 		data[i]=line[sizec+i];
 		i++;
 	}
@@ -91,7 +91,7 @@ void free_list_lines(list_lines *l){
 }
 
 void add_line(list_lines *l,char* line){
-	l->lines[l->size]=malloc(500*sizeof(char));
+	l->lines[l->size]=malloc((strlen(line)+1)*sizeof(char));
 	strcpy(l->lines[l->size],line);
 	l->size++;
 }
@@ -104,13 +104,13 @@ void delete_line(list_lines *l, int pos){
 action *parser(char *line){
 	action *a = allocate_action();
 	int i=0,size = strlen(line),sizec=0;
-	char *num_pid_f = malloc(size*sizeof(char));
-	char *action = malloc(size*sizeof(char));
-	char *num_pid_s = malloc(size*sizeof(char));
+	char *num_pid_f = malloc((size+1)*sizeof(char));
+	char *action = malloc((size+1)*sizeof(char));
+	char *num_pid_s = malloc((size+1)*sizeof(char));
 	int resumed=0;
 	
 	/**Read pid father*/
-	while(line[i]!=' ' && i<size-1){
+	while(i<size && line[i]!=' '){
 		num_pid_f[i]=line[i];
 		i++;
 	}
@@ -121,7 +121,7 @@ action *parser(char *line){
 		sizec++;
 	i=0;
 	/**Read call or resumed*/
-	while(line[sizec+i]!='(' && i<size-sizec){
+	while(i<size-sizec && line[sizec+i]!='('){
 		if(!resumed && line[sizec+i]=='<'){
 			resumed = 1;
 			a->begin =0;
@@ -158,7 +158,7 @@ action *parser(char *line){
 	sizec+=++i;
 	i=0;
 	/**Read unfinished or not*/
-	while(i<size-sizec && (line[sizec+i]!='=' || line[sizec+i+1]!=' ')){
+	while(i+1<size-sizec && (line[sizec+i]!='=' || line[sizec+i+1]!=' ')){
 		if(line[sizec+i]=='<'){
 			a->wait = 1;
 			free(num_pid_f);
@@ -171,7 +171,7 @@ action *parser(char *line){
 	sizec+=i+2;
 	i=0;
 	/**Read pid son*/
-	while(i<size-sizec && line[sizec+i]!='\0' && line[sizec+i+1]!=' ' && line[sizec+i]!='\n'){
+	while(i<size-sizec && line[sizec+i]!='\0' && line[sizec+i]!=' ' && line[sizec+i]!='\n'){
 		num_pid_s[i]=line[sizec+i];
 		i++;
 	}
@@ -201,7 +201,9 @@ void writing(int fds,char* name_prog){
     	size_t len=0;
     	int got = 0;
     	creat("res/resultat.txt",0666);
+    	creat("res/CLE1.txt",0666);
     	int fd = open("res/resultat.txt",O_WRONLY);
+    	int fd1 = open("res/CLE1.txt",O_WRONLY);
     	while((got=getline(&buf, &len, buffer))!=-1){
       		//printf("write : %d %s",got,buf);
       		write(fd,buf,got);
@@ -209,6 +211,7 @@ void writing(int fds,char* name_prog){
 	  		//printf("read : %d %s\n",got,list[i]);
 	  		sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
 	  		//printf("%s",line);
+	  		write(fd1,line,strlen(line));
 	  		write(fds,line,strlen(line));
 	  		free_action(action);
     	}
@@ -225,9 +228,9 @@ list_lines *extract_lines(char *lines){
 	int pos = 0,posc=0;
 	list_lines *list_lines = allocate_list_lines();
 	while(pos<size){
-		char *line = malloc(500*sizeof(char));
+		char *line = malloc((size+1)*sizeof(char));
 		posc=pos;
-		while(lines[pos]!='\n' && pos<size){
+		while(pos<size && lines[pos]!='\n'){
 			line[pos-posc]=lines[pos];
 			pos++;
 		}
@@ -255,7 +258,7 @@ void clear_listing(int *listing,int size){
 }
 
 void read_info(int fdl,int fdw){
-	char *buf =malloc(500*sizeof(char));
+	char *buf =malloc(501*sizeof(char));
 	char line[500];
 	int *listing = malloc(50*sizeof(int));
 	int *bool_listing = malloc(50*sizeof(int));
@@ -324,7 +327,9 @@ void read_info(int fdl,int fdw){
 }
 
 void execute_proc(char *name_binary,int fd){
-	/*Tester si le fifo existe et creer le fifo si necessaire*/ 
+	/*Tester si le fifo existe et creer le fifo si necessaire*/
+	mkdir("res",01777);
+	mkfifo("res/lala",0666);
 	int fde[2];
 	pipe(fde);
 	if(!fork()){
@@ -337,4 +342,12 @@ void execute_proc(char *name_binary,int fd){
 		read_info(fde[0],fd);
 		close(fde[0]);
 	}
+}
+
+int main(){
+  char *line = malloc(500*sizeof(char));
+  action *action = parser("2962  <... clone resumed> child_stack=0, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0xb7571938) = 2965 \n");
+  sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
+  printf("%s",line);
+  return 0;
 }

@@ -30,7 +30,7 @@ void exercise_run_stop(void* ex);
 exercise_t exercise_new(const char *mission, const char *template,const char *prof_solution, void* wo);
 void exercise_free(exercise_t e);
 
-static GMutex* demo_runner_running;
+static GMutex *demo_runner_running;
 static GMutex* run_runner_running;
 static char *binary; // The name of the binary
 static pid_t*pids;
@@ -106,16 +106,8 @@ void* exercise_demo_runner(void *exo) {
 	world_set_step_delay(e->w_goal,50); /* FIXME: should be configurable from UI */
 	printf("Goal world rebuild\n");
 	
-	/**
-	Regarger où est defini w_init !!!!!!
-	Pour initialiser directement la tortue de départ 
-	*/
-	t=entity_new(10.0, 120.0, 0.0);
-	//entity_set_binary(t, e->s_filename);
+	t=world_entity_geti(e->w_goal,0);
 	entity_set_world(t,e->w_goal);
-	entity_free(world_entity_geti(e->w_goal,0));
-	world_decrease_amount_entity(e->w_goal);
-	world_entity_add(e->w_goal,t);
 	printf("End of building begining turtles\n");
 	
 	if (pids)
@@ -223,9 +215,8 @@ tree_fork *allocate_tree_fork(tree_fork *tff){
 	tf->s = malloc(MAX_ENTITY*sizeof(struct tree_fork *));
 	tf->nb_son = 0;
 	tf->pos=-1;
-	if(tff!=NULL){
+	if(tff!=NULL)
 		tf->pos=tff->nb_son;
-	}
 	return tf;
 }
 
@@ -247,9 +238,8 @@ void free_tree_fork(tree_fork *tf){
 }
 
 int tree_fork_nb_branch_up(tree_fork *tf){
-	if(tf==NULL){
+	if(tf==NULL)
 		return 0;
-	}
 	return 1+tf->pos+tree_fork_nb_branch_up((tree_fork *)tf->f);
 }
 
@@ -291,6 +281,38 @@ int find_pos_pid(int *list_pid,int size,int pid){
 	return -1;
 }
 
+typedef struct{
+	entity_t t;
+	int length;
+}data_forward;
+
+void *forward_one_entity(void *df){
+	data_forward *data = (data_forward *)df;
+	entity_forward(data->t, data->length);
+	free(df);
+	return NULL;
+}
+
+void forward_all_entities(entity_t *list, int size, int length){
+	int i;
+	GThread **thread= malloc(size*sizeof(GThread *));
+	/*g_thread_init(NULL);
+	gdk_threads_init();*/
+	for(i=0;i<size;i++){
+		data_forward *data = malloc(sizeof(data_forward));
+		data->t = list[i];
+		data->length = length;
+		//forward_one_entity((void*)data);
+		//gdk_threads_enter();
+		thread[i] = g_thread_create(forward_one_entity,(void*)data,1,NULL);
+		//gdk_threads_leave();
+	}
+	for(i=0;i<size;i++){
+     	g_thread_join(thread[i]);
+  	}
+  	free(thread);
+}
+
 void *entity_fork_run(void *param){
 	param_runner *pr = param;
     char* buf=malloc(512*sizeof(char));
@@ -304,15 +326,15 @@ void *entity_fork_run(void *param){
 		else if(got>0){
 			buf[got]='\0';
 			list_lines *list=extract_lines(buf);
-			int nb=list->size,i,j;
+			int nb=list->size,j;
 			for(j=0;j<nb;j++){
 				//printf("action : %s\n",list->lines[j]);
 				if(!strcmp(list->lines[j],"new turn")){
 					//printf("New turn\n");
-					for(i=0;i<pr->nb_t;i++){
-						//printf("Turtle %d move\n",i);
-						entity_forward(pr->list_t[i], 10);
-					}
+					/*Threader l'avancée des tortue*/
+					//g_static_mutex_lock(&forward_running);
+					forward_all_entities(pr->list_t,pr->nb_t,10);
+					//g_static_mutex_unlock(&forward_running);
 					//printf("end move turtles\n");
       			}
       			else{
@@ -325,19 +347,23 @@ void *entity_fork_run(void *param){
       				}
       				if(!strcmp(action->call,"clone")){
       					//printf("Creat a new turtle\n");
-      					int i,pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
+      					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
+      					if(pos_f == -1 ){
+      						printf("Erreur pid %d introuvable\n%s\n",action->pid_father,list->lines[j]);
+      						free_action(action);
+      						continue;
+      					}
       					tree_fork_add_son(pr->list_nodes_tree[pos_f],pr,action->pid_son);
       					add_entity(pr, pos_f,action->pid_son);
-      					/*printf("New turtle %d\n",pr->nb_t-1);
-						printf("position : %f %f\n",entity_get_x(pr->list_t[pr->nb_t-1]),entity_get_y(pr->list_t[pr->nb_t-1]));*/
+      					printf("New turtle nu %d pid %d\n",pr->nb_t-1,action->pid_son);
       					entity_left(pr->list_t[pr->nb_t-1], 90);
       					int nb_branch = tree_fork_nb_branch_up(pr->list_nodes_tree[pr->nb_t-1]);
       					//printf("nb_branch : %d\n",nb_branch);
-      					entity_forward(pr->list_t[pr->nb_t-1], 30.0/pow(2,nb_branch-1));
+      					entity_forward(pr->list_t[pr->nb_t-1], world_get_sizeY(pr->w)*0.3/pow(2,nb_branch-1));
       					entity_right(pr->list_t[pr->nb_t-1], 90);
-      					for(i=0;i<pr->nb_t;i++){
-							entity_forward(pr->list_t[i], 5);
-						}
+      					//g_static_mutex_lock(&forward_running);
+      					forward_all_entities(pr->list_t,pr->nb_t,5);
+      					//g_static_mutex_unlock(&forward_running);
       				}
       				if(!strcmp(action->call,"wait4") && action->begin){
       					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
@@ -371,16 +397,23 @@ void *entity_fork_run(void *param){
       				if(!strcmp(action->call,"exit_group") && action->end){
       					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
       					int *color = malloc(3*sizeof(int));
-      					tree_fork *gf = ((tree_fork *)pr->list_nodes_tree[pos_f]->f);
       					int end;
       					int pos_gf;
-      					if(gf==NULL){
-      						pos_gf = -1;
-      						end = 1;
+      					tree_fork *gf;
+      					if(pos_f == -1 ){
+      						printf("Erreur pid %d introuvable\n%s\n",action->pid_father,list->lines[j]);
+      						free(color);
+      						free_action(action);
+      						continue;
       					}
-      					else{
+      					if(pr->list_nodes_tree[pos_f]->f != NULL){
+      						gf = (tree_fork *)pr->list_nodes_tree[pos_f]->f;
       						pos_gf = find_pos_pid(pr->list_pid,pr->nb_t,gf->pid);
       						end = entity_get_end(pr->list_t[pos_gf]);
+      					}
+      					else{
+      						pos_gf = -1;
+      						end = 1;
       					}
       					if(end==1){
       						color[0]=1;
@@ -407,7 +440,6 @@ void *entity_fork_run(void *param){
 	}
 	while(got>0);
     free(buf);
-    //free(f);
     return NULL;
 }
 
@@ -435,16 +467,9 @@ void* exercise_run_runner(void *exo) {
 	world_free(e->w_curr);
 	e->w_curr = world_copy(e->w_init);
 	world_set_step_delay(e->w_curr,50);  /* FIXME: should be configurable from UI */
-	/**
-	Regarger où est defini w_init !!!!!!
-	Pour initialiser directement la tortue de départ 
-	*/
-	t=entity_new(10.0, 120.0, 0.0);
-	//entity_set_binary(t, exercise_get_binary(e));
+	
+	t=world_entity_geti(e->w_curr,0);
 	entity_set_world(t,e->w_curr);
-	entity_free(world_entity_geti(e->w_curr,0));
-	world_decrease_amount_entity(e->w_curr);
-	world_entity_add(e->w_curr,t);
 
 	/*Test strace*/
 	int fd[2];

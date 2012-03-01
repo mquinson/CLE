@@ -231,7 +231,7 @@ void exercise_run_one_entity(entity_t t) {
 		exit(2);
 	}// Father: listen what the child has to tell
 
-	printf("Turtle rank %d running child %s\n",entity_get_rank(t),binary);
+	printf("Turtle rank %d running child %s\n",entity_get_rank(t),entity_get_binary(t));
 	pids[entity_get_rank(t)] = pid;
 	close(f2c[0]);
 	close(c2f[1]);
@@ -344,8 +344,8 @@ void* exercise_run_runner(void *exo) {
 	g_mutex_unlock(run_runner_running);
 	free(pids);
 	pids=NULL;
-	unlink(binary);
-	free(binary);
+	unlink(exercise_get_binary(e));
+	free(exercise_get_binary(e));
 	return NULL;
 
 
