@@ -80,9 +80,14 @@ the father read the FIFO line by line, parse and write the result in a pipe (fds
 void writing(int fds,char* name_prog);
 
 /**
+Read a single line on the file descriptor fd
+*/
+int readline (int fd, char *line, int maxlen);
+
+/**
 Creat a list of lines with a string
 */
-list_lines *extract_lines(char *lines);
+/*list_lines *extract_lines(char *lines);*/
 
 /**
 Know if pid_t is in list

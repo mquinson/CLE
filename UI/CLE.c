@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
     /* load the exercise (must be done before we show the widget) */
       //printf("%s\n", getenv("CD"));
-    CLE_set_lesson(lesson_from_file(strdup("./fork.so")));
+    CLE_set_lesson(lesson_from_file(strdup("./logo.so")));
 //    CLE_set_lesson(lesson_from_file(strdup("./recursion.so")));
 
     /* Show window & start main loop */

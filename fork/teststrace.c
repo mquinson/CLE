@@ -222,6 +222,32 @@ void writing(int fds,char* name_prog){
   	wait(NULL);
 }
 
+int readline (int fd, char *line, int maxlen){
+	int n, rc, retvalue, encore=1; 
+	char c, *tmpptr=line; 
+	for (n=1; (n < maxlen) && (encore) ; n++) {
+		if ( (rc = read (fd, &c, 1)) ==1) {
+			*tmpptr++ =c; 
+			if (c == '\n'){  /* fin de ligne atteinte */
+				encore =0; 
+				retvalue = n;
+			}
+		}
+		else if (rc ==0) {  /* plus rien à lire */
+			encore = 0;
+			if (n==1) 
+				retvalue = 0;  /* rien a été lu */
+			else 
+				retvalue = n;
+		}
+		else { /*rc <0 */
+			
+		}
+	}
+	*tmpptr = '\0';  /* pour terminer la ligne */
+	return (retvalue);
+}
+/*
 list_lines *extract_lines(char *lines){
 	//printf("send : %s\n",lines);
 	int size=strlen(lines);
@@ -240,7 +266,7 @@ list_lines *extract_lines(char *lines){
 		pos++;
 	}
 	return list_lines;
-}
+}*/
 
 int isInListing(int *listing,int size,int pid_f){
 	int i;
@@ -270,7 +296,7 @@ void read_info(int fdl,int fdw){
 	clear_listing(listing,50);
 	clear_listing(bool_listing,50);
 	do{
-		if ((got = read(fdl, buf, 500)) < 0){
+		if ((got = readline(fdl, buf, 500)) < 0){
             //perror("parent - read");
       		got=1;
         }
@@ -278,11 +304,11 @@ void read_info(int fdl,int fdw){
 			//printf("size : %d\n",got);
 			buf[got]='\0';
 			//printf("%s",buf);
-			list_lines *list=extract_lines(buf);
-			int nb=list->size,i;
-			for(i=0;i<nb;i++){
+			//list_lines *list=extract_lines(buf);
+			/*int nb=list->size,i;*/
+			/*for(i=0;i<nb;i++){*/
 				/*Build action and manage the turns*/
-				action = build_again_action(list->lines[i]);
+				action = build_again_action(buf/*list->lines[i]*/);
 				if((pos=isInListing(listing,size_listing,action->pid_father))==-1){
 					listing[size_listing]=action->pid_father;
 					size_listing++;
@@ -314,9 +340,9 @@ void read_info(int fdl,int fdw){
 				}
 				write(fd,line,strlen(line));
 				free_action(action);
-				delete_line(list,i);
-			}
-			free_list_lines(list);
+				/*delete_line(list,i);*/
+			/*}*/
+			/*free_list_lines(list);*/
 		}
 	}
 	while(got>0);

@@ -318,18 +318,22 @@ void *entity_fork_run(void *param){
     char* buf=malloc(512*sizeof(char));
 	int got = 0,first=1;
 	action *action;
+	creat("res/CLE2.txt",0666);
+	int fd1= open("res/CLE2.txt",O_WRONLY);
 	do{
-		if ((got=read(pr->fd,buf,511)) < 0){
+		if ((got=readline(pr->fd,buf,511)) < 0){
             //perror("parent - read");
       		got=1;
         }
 		else if(got>0){
 			buf[got]='\0';
-			list_lines *list=extract_lines(buf);
-			int nb=list->size,j;
-			for(j=0;j<nb;j++){
-				//printf("action : %s\n",list->lines[j]);
-				if(!strcmp(list->lines[j],"new turn")){
+			/*list_lines *list=extract_lines(buf);*/
+			/*int nb=list->size,j;*/
+			write(fd1,"--------------\n",15);
+			/*for(j=0;j<nb;j++){*/
+			  write(fd1,/*list->lines[j]*/buf,strlen(buf/*list->lines[j]*/));
+			  //printf("action : %s\n",list->lines[j]);
+				if(!strncmp(/*list->lines[j]*/buf,"new turn",strlen("new turn"))){
 					//printf("New turn\n");
 					/*Threader l'avancée des tortue*/
 					//g_static_mutex_lock(&forward_running);
@@ -338,7 +342,7 @@ void *entity_fork_run(void *param){
 					//printf("end move turtles\n");
       			}
       			else{
-      				action = build_again_action(list->lines[j]);
+      				action = build_again_action(buf/*list->lines[j]*/);
       				if(first){
       					pr->list_pid[0]=action->pid_father;
       					pr->racine->pid=action->pid_father;
@@ -349,7 +353,7 @@ void *entity_fork_run(void *param){
       					//printf("Creat a new turtle\n");
       					int pos_f = find_pos_pid(pr->list_pid,pr->nb_t,action->pid_father);
       					if(pos_f == -1 ){
-      						printf("Erreur pid %d introuvable\n%s\n",action->pid_father,list->lines[j]);
+      						printf("Erreur pid %d introuvable\n%s\n",action->pid_father,buf/*list->lines[j]*/);
       						free_action(action);
       						continue;
       					}
@@ -401,7 +405,7 @@ void *entity_fork_run(void *param){
       					int pos_gf;
       					tree_fork *gf;
       					if(pos_f == -1 ){
-      						printf("Erreur pid %d introuvable\n%s\n",action->pid_father,list->lines[j]);
+      						printf("Erreur pid %d introuvable\n%s\n",action->pid_father,buf/*list->lines[j]*/);
       						free(color);
       						free_action(action);
       						continue;
@@ -414,16 +418,21 @@ void *entity_fork_run(void *param){
       					else{
       						pos_gf = -1;
       						end = 1;
-      					}
-      					if(end==1){
       						color[0]=1;
       						color[1]=1;
       						color[2]=1;
       						entity_set_color(pr->list_t[pos_f],color);
       						entity_set_end(pr->list_t[pos_f],1);
-      						stop_zombies_son(pr,pos_f,color);
       					}
-      					else if(end!=1){
+      					/*if(end==1){
+      						color[0]=1;
+      						color[1]=1;
+      						color[2]=1;
+      						entity_set_color(pr->list_t[pos_f],color);
+      						entity_set_end(pr->list_t[pos_f],1);
+      						//stop_zombies_son(pr,pos_f,color);
+      					}
+      					else */if(end!=1){
       						color[0]=1;
       						color[1]=0;
       						color[2]=0;
@@ -433,9 +442,9 @@ void *entity_fork_run(void *param){
       					free(color);
       				}
       				free_action(action);
-      			}
+      			/*}*/
       		}
-      		free_list_lines(list);
+      		/*free_list_lines(list);*/
 		}
 	}
 	while(got>0);
