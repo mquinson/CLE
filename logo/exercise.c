@@ -233,6 +233,7 @@ void exercise_run_one_entity(entity_t t) {
 	}// Father: listen what the child has to tell
 
 	printf("Turtle rank %d running child %s\n",entity_get_rank(t),entity_get_binary(t));
+
 	entity_set_pid(t, pid);
 	close(f2c[0]);
 	close(c2f[1]);

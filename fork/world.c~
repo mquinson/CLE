@@ -80,11 +80,11 @@ int world_eq(tree_fork *s,tree_fork *p,world_t wc, world_t wo) {
 	if(!tree_eq(s,p)){
 		return FALSE;
 	}
-	int i;
+	/*int i;
 	for(i=0;i<wc->amount_entity;i++){
 		if(entity_get_end(wc->entities[i]) != entity_get_end(wo->entities[i]))
 			return FALSE;
-	}
+	}*/
 	return TRUE;
 }
 /* easy getters/setters */
@@ -130,13 +130,12 @@ void world_line_add(world_t w, double x1, double y1, double x2, double y2,int *c
 	w->lines[w->amount_lines].color[2] = color[2];
 	w->amount_lines++; // Don't move it higher so that the drawer only see valid lines
 
-	g_static_mutex_unlock(&my_mutex);
-
 	if (w->step_delay) {
 		usleep(w->step_delay*1000);
 		//g_thread_yield();
 	}
 	world_ask_repaint(w);
+	g_static_mutex_unlock(&my_mutex);
 }
 
 /* Helper function to implement world_turtle_foreach  */
@@ -182,7 +181,7 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
     /* Draw the turtles */
     entity_t t;
     for(it=0;it<w->amount_entity;it++){
-    	entity_t t = w->entities[it];
+    	t = w->entities[it];
     	int *color = entity_get_pen_color(t);
     	cairo_set_source_rgb( cr, color[0], color[1], color[2] );
     	cairo_move_to(cr, entity_get_x(t), entity_get_y(t));

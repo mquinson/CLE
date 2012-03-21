@@ -11,15 +11,15 @@
 const double EPSILON = .0000001;
 
 struct s_entity {
-	world_t world;
-	int rank;
-	double x,y;
-	double heading;
-	int pen_is_down;
-	int *pen_color;
-	char* binary;
-	int end;
-	f_run_t run_fct;
+	world_t world; 
+	int rank;			/***/
+	double x,y;			/**positions in (x,y)*/
+	double heading;		/***/
+	int pen_is_down;	/**1 if the entity is drawing, 0 otherwise*/
+	int *pen_color;		/**color (r,g,b) of the pen*/
+	char* binary;		/**useless here*/
+	int end;			/**1 if it's ended*/
+	f_run_t run_fct;	/**useless here*/
 };
 
 entity_t entity_new(double x, double y, double heading) {
@@ -54,8 +54,8 @@ int entity_eq(entity_t t1,entity_t t2) {
 }
 entity_t entity_copy(entity_t from) {
 	entity_t res = entity_new(from->x,from->y, 0);
-   /* We don't use the heading argument of turtle_new to avoid converting from radian to degree and back to radian [catched by Loic Poulain] */
-        res->heading = from->heading;
+	/* We don't use the heading argument of turtle_new to avoid converting from radian to degree and back to radian [catched by Loic Poulain] */
+	res->heading = from->heading;
 	res->pen_is_down = from->pen_is_down;
 	res->rank = from->rank;
 	if(from->binary)
@@ -84,15 +84,16 @@ int entity_get_end(entity_t t) {
 /* User API */
 static void move_to(entity_t t, double new_x, double new_y) {
 	/* FIXME: account for clipping */
-
 	if (t->pen_is_down)
 		world_line_add(t->world,t->x,t->y,new_x,new_y,t->pen_color);
 	t->x = new_x;
 	t->y = new_y;
 }
+
 void entity_forward(entity_t t, double steps) {
 	move_to(t, t->x+steps*cos(t->heading), t->y+steps*sin(t->heading));
 }
+
 void entity_backward(entity_t t, double steps) {
 	move_to(t, t->x+steps*cos(t->heading+M_PI), t->y+steps*sin(t->heading+M_PI));
 }
@@ -152,10 +153,12 @@ void* entity_run(void *data) {
 		printf("Not running the NULL run function for that turtle");
 	return NULL;
 }
+
 /* get the turtle ranking in its world (to be called from world_add_turtle only) */
 void entity_set_rank(entity_t t, int rank) {
 	t->rank = rank;
 }
+
 /* get the turtle ranking in its world (to be called from exercise) */
 int entity_get_rank(entity_t t) {
 	return t->rank;

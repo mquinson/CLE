@@ -143,7 +143,7 @@ void* entity_run(void *data) {
 	if (t->run_fct)
 		(*t->run_fct)(t);
 	else
-		printf("Not running the NULL run function for that entity");
+		printf("Not running the NULL run function for that entity\n");
 	return NULL;
 }
 

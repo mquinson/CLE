@@ -19,10 +19,10 @@ void free_action(action *a){
 action *build_again_action(char *line){
 	action *a = allocate_action();
 	int i=0,size = strlen(line),sizec=0;
-	char *data = malloc(20*sizeof(char));
+	char *data = malloc((size+1)*sizeof(char));
 	
 	/**Read begin*/
-	while(line[i]!='/' && i<size){
+	while(i<size && line[i]!='/'){
 		data[i]=line[i];
 		i++;
 	}
@@ -30,8 +30,9 @@ action *build_again_action(char *line){
 	a->begin = atoi(data);
 	sizec=i+1;
 	i=0;
+	
 	/**Read pid_father*/
-	while(line[sizec+i]!='/' && i<size-sizec){
+	while(i<size-sizec && line[sizec+i]!='/'){
 		data[i]=line[sizec+i];
 		i++;
 	}
@@ -39,6 +40,7 @@ action *build_again_action(char *line){
 	a->pid_father=atoi(data);
 	sizec+=i+1;
 	i=0;
+	
 	/**Read call*/
 	while(i<size-sizec && line[sizec+i]!='/'){
 		data[i]=line[sizec+i];
@@ -48,6 +50,7 @@ action *build_again_action(char *line){
 	strcpy(a->call,data);
 	sizec+=i+1;
 	i=0;
+	
 	/**Read wait*/
 	while(i<size-sizec && line[sizec+i]!='/'){
 		data[i]=line[sizec+i];
@@ -57,6 +60,7 @@ action *build_again_action(char *line){
 	a->wait=atoi(data);
 	sizec+=i+1;
 	i=0;
+	
 	/**Read pid_son*/
 	while(i<size-sizec && line[sizec+i]!='/'){
 		data[i]=line[sizec+i];
@@ -66,6 +70,7 @@ action *build_again_action(char *line){
 	a->pid_son=atoi(data);
 	sizec+=i+1;
 	i=0;
+	
 	/**Read end*/
 	while(i<size-sizec && line[sizec+i]!='\0' && line[sizec+i]!='\n'){
 		data[i]=line[sizec+i];
@@ -78,39 +83,16 @@ action *build_again_action(char *line){
 	return a;
 }
 
-list_lines *allocate_list_lines(){
-	list_lines *l = malloc(sizeof(list_lines));
-	l->lines = malloc(50*sizeof(char *));
-	l->size=0;
-	return l;
-}
-
-void free_list_lines(list_lines *l){
-	free(l->lines);
-	free(l);
-}
-
-void add_line(list_lines *l,char* line){
-	l->lines[l->size]=malloc(500*sizeof(char));
-	strcpy(l->lines[l->size],line);
-	l->size++;
-}
-
-void delete_line(list_lines *l, int pos){
-	free(l->lines[pos]);
-	l->size--;
-}
-
-action *parser(char *line){
+action *parser_command(char *line){
 	action *a = allocate_action();
 	int i=0,size = strlen(line),sizec=0;
-	char *num_pid_f = malloc(sizeof(int));
-	char *action = malloc(20*sizeof(char));
-	char *num_pid_s = malloc(sizeof(int));
+	char *num_pid_f = malloc((size+1)*sizeof(char));
+	char *action = malloc((size+1)*sizeof(char));
+	char *num_pid_s = malloc((size+1)*sizeof(char));
 	int resumed=0;
 	
 	/**Read pid father*/
-	while(line[i]!=' ' && i<size){
+	while(i<size && line[i]!=' '){
 		num_pid_f[i]=line[i];
 		i++;
 	}
@@ -119,9 +101,10 @@ action *parser(char *line){
 	sizec=i;
 	while(line[sizec]==' ' && sizec<size)
 		sizec++;
+	
 	i=0;
 	/**Read call or resumed*/
-	while(line[sizec+i]!='(' && i<size-sizec){
+	while(i<size-sizec && line[sizec+i]!='('){
 		if(!resumed && line[sizec+i]=='<'){
 			resumed = 1;
 			a->begin =0;
@@ -141,7 +124,7 @@ action *parser(char *line){
 		}
 		i++;
 	}
-	//printf("%s\n",action);
+	
 	if(resumed)
 		action[i-1]='\0';
 	else
@@ -151,42 +134,40 @@ action *parser(char *line){
 		a->end =1;
 		free(num_pid_f);
 		free(action);
-		//free(num_pid_s);
 		return a;
 	}
 	strcpy(a->call,action);
 	sizec+=++i;
 	i=0;
+	
 	/**Read unfinished or not*/
-	while(i<size-sizec && (line[sizec+i]!='=' || line[sizec+i+1]!=' ')){
+	while(i+1<size-sizec && (line[sizec+i]!='=' || line[sizec+i+1]!=' ')){
 		if(line[sizec+i]=='<'){
 			a->wait = 1;
 			free(num_pid_f);
 			free(action);
-			//free(num_pid_s);
 			return a;
 		}
 		i++;
 	}
 	sizec+=i+2;
 	i=0;
+	
 	/**Read pid son*/
-	while(i<size-sizec && line[sizec+i]!='\0' && line[sizec+i+1]!=' ' && line[sizec+i]!='\n'){
+	while(i<size-sizec && line[sizec+i]!='\0' && line[sizec+i]!=' ' && line[sizec+i]!='\n'){
 		num_pid_s[i]=line[sizec+i];
 		i++;
 	}
 	num_pid_s[i]='\0';
-	//printf("pid_s : %s %d\n",num_pid_s,i);
 	if(strcmp("?",num_pid_s))
 		a->pid_son = atoi(num_pid_s);
 	a->end =1;
 	free(num_pid_f);
 	free(action);
-	//free(num_pid_s);
 	return a;
 }
 
-void writing(int fds,char* name_prog){
+void writing_command(int fds,char* name_prog){
 	if(!fork()){
   		creat("res/tmp.txt",0666);
   		int fdout = open("res/tmp.txt",O_WRONLY);
@@ -201,43 +182,45 @@ void writing(int fds,char* name_prog){
     	size_t len=0;
     	int got = 0;
     	creat("res/resultat.txt",0666);
+    	creat("res/CLE1.txt",0666);
     	int fd = open("res/resultat.txt",O_WRONLY);
+    	int fd1 = open("res/CLE1.txt",O_WRONLY);
     	while((got=getline(&buf, &len, buffer))!=-1){
-      		//printf("write : %d %s",got,buf);
       		write(fd,buf,got);
-      		action = parser(buf);
-	  		//printf("read : %d %s\n",got,list[i]);
+      		action = parser_command(buf);
 	  		sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
-	  		//printf("%s",line);
+	  		write(fd1,line,strlen(line));
 	  		write(fds,line,strlen(line));
 	  		free_action(action);
     	}
     	free(line);
-    	free(buffer);
     	free(buf);
     	close(fd);
   	}
   	wait(NULL);
 }
 
-list_lines *extract_lines(char *lines){
-	//printf("send : %s\n",lines);
-	int size=strlen(lines);
-	int pos = 0,posc=0;
-	list_lines *list_lines = allocate_list_lines();
-	while(pos<size){
-		char *line = malloc(500*sizeof(char));
-		posc=pos;
-		while(lines[pos]!='\n' && pos<size){
-			line[pos-posc]=lines[pos];
-			pos++;
+int readline (int fd, char *line, int maxlen){
+	int n, rc, retvalue, still=1; 
+	char c, *tmpptr=line; 
+	for (n=1; (n < maxlen) && (still) ; n++) {
+		if ( (rc = read (fd, &c, 1)) ==1) {
+			*tmpptr++ =c; 
+			if (c == '\n'){  
+				still =0; 
+				retvalue = n;
+			}
 		}
-		line[pos-posc]='\0';
-		//printf("line number %d : %s\n",list_lines->size,line);
-		add_line(list_lines,line);
-		pos++;
+		else if (rc ==0) {  
+			still = 0;
+			if (n==1) 
+				retvalue = 0;
+			else 
+				retvalue = n;
+		}
 	}
-	return list_lines;
+	*tmpptr = '\0'; 
+	return (retvalue);
 }
 
 int isInListing(int *listing,int size,int pid_f){
@@ -256,82 +239,65 @@ void clear_listing(int *listing,int size){
 }
 
 void read_info(int fdl,int fdw){
-	char *buf =malloc(500*sizeof(char));
+	char *buf =malloc(501*sizeof(char));
 	char line[500];
 	int *listing = malloc(50*sizeof(int));
 	int *bool_listing = malloc(50*sizeof(int));
 	int size_listing=0,num_turn=0,pos=-1;
 	creat("res/CLE.txt",0666);
 	int got=0,fd = open("res/CLE.txt", O_WRONLY);
-	//printf("File open\n");
 	action *action;
 	clear_listing(listing,50);
 	clear_listing(bool_listing,50);
 	do{
-		if ((got = read(fdl, buf, 500)) < 0){
-            //perror("parent - read");
+		if ((got = readline(fdl, buf, 500)) < 0){
       		got=1;
         }
 		else if(got>0){
-			//printf("size : %d\n",got);
 			buf[got]='\0';
-			//printf("%s",buf);
-			list_lines *list=extract_lines(buf);
-			int nb=list->size,i;
-			for(i=0;i<nb;i++){
-				/*Build action and manage the turns*/
-				action = build_again_action(list->lines[i]);
-				if((pos=isInListing(listing,size_listing,action->pid_father))==-1){
-					listing[size_listing]=action->pid_father;
-					size_listing++;
-					bool_listing[size_listing-1]=1;
-					//printf("new proc call : %d\n",size_listing-1);
-				}
-				else{
-					if(bool_listing[pos]){
-						clear_listing(bool_listing,size_listing);
-						bool_listing[pos]=1;
-						num_turn++;
-						char line2[50];
-						sprintf(line2,"new turn\n");
-						//printf("%s",line2);
-						write(fdw,line2,strlen(line2));
-						write(fd,line2,strlen(line2));
-					}	
-					else{
-						bool_listing[pos]=1;
-						//printf("proc %d call\n",pos);
-					}
-				}
-				/*Print result*/
-				/*sprintf(line,"%d : %s : %d",action->pid_father,action->call,action->pid_son);
-				printf("%s",line);*/
-				sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
-				if((action->end && (strcmp(action->call,"clone") || action->pid_son!=0))|| !strcmp("wait4",action->call) || !strcmp("waitpid",action->call)){
-					write(fdw,line,strlen(line));
-				}
-				write(fd,line,strlen(line));
-				free_action(action);
-				delete_line(list,i);
+			/*Build action and manage the turns*/
+			action = build_again_action(buf);
+			if((pos=isInListing(listing,size_listing,action->pid_father))==-1){
+				listing[size_listing]=action->pid_father;
+				size_listing++;
+				bool_listing[size_listing-1]=1;
 			}
-			free_list_lines(list);
+			else{
+				if(bool_listing[pos]){
+					clear_listing(bool_listing,size_listing);
+					bool_listing[pos]=1;
+					num_turn++;
+					char line2[50];
+					sprintf(line2,"new turn\n");
+					write(fdw,line2,strlen(line2));
+					write(fd,line2,strlen(line2));
+				}	
+				else
+					bool_listing[pos]=1;
+			}
+			sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
+			if((action->end && (strcmp(action->call,"clone") || action->pid_son!=0))|| !strcmp("wait4",action->call) || !strcmp("waitpid",action->call)){
+				write(fdw,line,strlen(line));
+			}
+			write(fd,line,strlen(line));
+			free_action(action);
 		}
 	}
 	while(got>0);
 	free(bool_listing);
 	free(buf);
-	//free(fd);
 	free(listing);
 }
 
 void execute_proc(char *name_binary,int fd){
-	/*if(!fork())
-		execlp("make","make","fifo", NULL);*/
+	/*Tester si le fifo existe et creer le fifo si necessaire*/
+	mkdir("res",01777);
+	mkfifo("res/lala",0666);
 	int fde[2];
 	pipe(fde);
 	if(!fork()){
 		close(fde[0]);
-		writing(fde[1],name_binary);
+		writing_command(fde[1],name_binary);
 		close(fde[1]);
 	}
 	else{

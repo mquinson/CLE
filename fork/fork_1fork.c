@@ -10,7 +10,7 @@
 exercise_t fork_1fork_create(void) {
 	printf("Construction de l'exercise 1fork\n");
 	world_t w = world_new(200,200);
-	world_entity_add(w,entity_new(100,100,0.));
+	world_entity_add(w,entity_new(10.0, 150.0, 0.));
 	exercise_t res = exercise_new(
 			"Dans cet exercice, vous devez écrire un fork .\n",
 
