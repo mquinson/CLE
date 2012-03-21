@@ -3,6 +3,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <signal.h>
 #include <math.h>
 #include <string.h>
 #include "world.h"
@@ -15,7 +17,10 @@ struct s_entity {
 	double x,y;
 	double heading;
 	int pen_is_down;
+	//Contains the name of the binary which the turtle launch
 	char* binary;
+	//Contains the pid number of the processus which is launch for the turtle
+	pid_t pid;
 	f_run_t run_fct;
 };
 
@@ -28,6 +33,7 @@ entity_t entity_new(double x, double y, double heading) {
 	res->pen_is_down = 1;
 	res->run_fct = NULL;
 	res->binary=NULL;
+	res->pid = 0;
 	return res;
 }
 
@@ -72,7 +78,7 @@ static void move_to(entity_t t, double new_x, double new_y) {
 	/* FIXME: account for clipping */
 
 	if (t->pen_is_down)
-		world_line_add(t->world,t->x,t->y,new_x,new_y);
+		world_line_add((core_world_t)t->world,t->x,t->y,new_x,new_y);
 	t->x = new_x;
 	t->y = new_y;
 }
@@ -101,9 +107,25 @@ void entity_pen_down(entity_t t) {
 void entity_set_world(entity_t t,world_t w) {
 	t->world = w;
 }
+
 void entity_set_code(entity_t t, f_run_t run) {
 	t->run_fct = run;
 }
+
+void entity_set_pid(entity_t t, pid_t pid) {
+	t->pid = pid;
+}
+
+int entity_get_pid(entity_t e) {
+	return e->pid;
+}
+
+void entity_stop_execution(entity_t t, pid_t pid) {
+	if(t->pid>0)
+	  kill(t->pid, SIGTERM);
+}
+
+
 
 void entity_set_binary(entity_t t, char* binary){
   if(t->binary)
@@ -124,6 +146,7 @@ void* entity_run(void *data) {
 		printf("Not running the NULL run function for that entity");
 	return NULL;
 }
+
 /* get the entity ranking in its world (to be called from world_add_entity only) */
 void entity_set_rank(entity_t t, int rank) {
 	t->rank = rank;

@@ -5,6 +5,8 @@
 #ifndef TURTLE_H_
 #define TURTLE_H_
 
+#include <sys/types.h>
+
 typedef struct s_entity *entity_t;
 typedef struct s_world *world_t;
 
@@ -18,6 +20,8 @@ int entity_eq(entity_t t1,entity_t t2);
 double entity_get_x(entity_t t);
 double entity_get_y(entity_t t);
 double entity_get_heading(entity_t t);
+int entity_get_pid(entity_t e);
+char* entity_get_binary(entity_t y);
 
 /* user API */
 void entity_forward(entity_t t, double steps);
@@ -33,7 +37,12 @@ typedef void (*f_run_t)(entity_t);
 void entity_set_world(entity_t t,world_t w);
 void entity_set_code(entity_t t, f_run_t run);
 void entity_set_binary(entity_t t, char* binary);
-char* entity_get_binary(entity_t y);
+void entity_set_pid(entity_t t, pid_t pid);
+
+/* Stop the processus which execute entity comportement*/
+void entity_stop_execution(entity_t t, pid_t pid);
+
+
 void* entity_run(void* t);
 
 /* get the entity ranking in its world (to be called from world_add_entity only) */

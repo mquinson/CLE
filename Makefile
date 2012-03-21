@@ -56,10 +56,12 @@ structUtility.o: Parser/structUtility.c Parser/structUtility.h Parser/parser.h
 
 
 # A first lesson plugin
-########################$(LOGO_EXO_SOURCE)
+########################
 logo.so: logo/logo.c $(LOGO_HEADERS) $(LOGO_CORE_SOURCE) $(LOGO_EXO_SOURCE)
 	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
-	
+
+#Fork plugin lesson section
+###########################
 fork.so: fork/fork.c $(FORK_HEADERS) $(FORK_CORE_SOURCE) $(FORK_EXO_SOURCE)
 	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
 

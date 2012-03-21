@@ -1,6 +1,7 @@
 /* logo_threesquare.c: first steps in logo: please draw 3 squares */
 
 #include "core/exercise.h"
+#include "core/world.h"
 #include "logo/logo.h"
 #include "logo/world.h"
 #include "logo/entity.h"
@@ -10,7 +11,7 @@
  * Ie, "aze" "rty" is changed into "azerty" by the preprocessor
  */
 exercise_t logo_threesquare_create(void) {
-	world_t w = world_new(200,200);
+	core_world_t w = world_new(200,200);
 	world_entity_add(w,entity_new(100,100,0.));
 	exercise_t res = exercise_new(
 			"Dans cet exercice, vous devez faire trois carrés successifs.\n"

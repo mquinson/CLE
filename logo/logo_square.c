@@ -1,10 +1,11 @@
 #include "core/exercise.h"
+#include "core/world.h"
 #include "logo/logo.h"
 #include "logo/world.h"
 #include "logo/entity.h"
 
 exercise_t logo_square_create(void) {
-	world_t w = world_new(200,200);
+	core_world_t w = world_new(200,200);
 	world_entity_add(w, entity_new(100,100,0.000000));
 	exercise_t res = exercise_new(
 "lalalalalalalalalalallalalalalaallal la\n"

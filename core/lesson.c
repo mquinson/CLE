@@ -1,11 +1,8 @@
 /* lesson.c: lesson handling functions */
-
-// BEGINKILL
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include <dlfcn.h>
-// ENDKILL
 #include <stdlib.h>
 
 #include "UI/CLE.h"
@@ -54,36 +51,6 @@ lesson_t lesson_from_file(char *filename) {
 	/* Call that function */
 	res = (*lesson_loader)();
 	/* Save the module for further cleaning */
-	res->exercise_demo = dlsym(module, "exercise_demo");
-	error = dlerror();
-	if (error != NULL) {
-		perror(error);
-		goto error;
-	}
-	res->exercise_run = dlsym(module, "exercise_run");
-	error = dlerror();
-	if (error != NULL) {
-		perror(error);
-		goto error;
-	}
-	res->exercise_stop = dlsym(module, "exercise_stop");
-	error = dlerror();
-	if (error != NULL) {
-		perror(error);
-		goto error;
-	}
-	res->exercise_free = dlsym(module, "exercise_free");
-	error = dlerror();
-	if (error != NULL) {
-		perror(error);
-		goto error;
-	}
-	res->world_repaint = dlsym(module, "world_redraw");
-	error = dlerror();
-	if (error != NULL) {
-		perror(error);
-		goto error;
-	}
 	res->dlmodule = module;
 	error:
 
@@ -95,7 +62,7 @@ void lesson_free(lesson_t l) {
 	if (!l)
 		return;
 	if(l->e_curr)
-	  (*(l->exercise_free))(l->e_curr);
+	  (*(l->e_curr->exercise_free))(l->e_curr);
 	if (l->dlmodule)
 		dlclose(l->dlmodule);
 	free(l->exos);
@@ -108,7 +75,7 @@ void lesson_set_exo(lesson_t l, int num) {
 		return;
 	}
 	if (l->e_curr)
-		(*(l->exercise_free))(l->e_curr);
+		(*(l->e_curr->exercise_free))(l->e_curr);
 	l->e_curr = l->exos[num].exo_constructor();
 	CLE_exercise_has_changed();
 }

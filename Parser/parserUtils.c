@@ -14,16 +14,16 @@
 #include "generate.h"
 
 
-static char* begin_template_balise = "/*BEGIN TEMPLATE*/";
-static char* end_template_balise="/*END TEMPLATE*/";
-static char* begin_solution_balise="/*BEGIN SOLUTION*/";
-static char* end_solution_balise="/*END SOLUTION*/";
+const static char* begin_template_balise = "/*BEGIN TEMPLATE*/";
+const static char* end_template_balise="/*END TEMPLATE*/";
+const static char* begin_solution_balise="/*BEGIN SOLUTION*/";
+const static char* end_solution_balise="/*END SOLUTION*/";
 
-static char* world_balise="@world";
-static char* entity_balise="@entity";
-static char* lesson_balise="@lesson";
-static char* exercise_balise="@exercise";
-static char* description_balise="@description";
+const static char* world_balise="@world";
+const static char* entity_balise="@entity";
+const static char* lesson_balise="@lesson";
+const static char* exercise_balise="@exercise";
+const static char* description_balise="@description";
 
 static int template=0;
 static int solution=0;
@@ -247,7 +247,7 @@ void parseLessonFile(lesson_content *lesson, exo_content *exo)
   free(filename);
 }
 
-/*Be carefull, this function change pointer value*/
+/*Be careful, this function change pointer value*/
 void goToNextWorld(char** ptr)
 {
   while((**ptr) !=' ' && (**ptr) != '\0' && (**ptr) != '\t')

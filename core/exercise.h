@@ -8,17 +8,29 @@
 #ifndef EXERCICE_H_
 #define EXERCICE_H_
 
+#include <gtk/gtk.h>
 
-typedef struct s_exercise {
-	const char*mission;
-	const char*template;
-	const char*prof_solution;
+typedef struct s_exercise *exercise_t;
+
+#include "core/world.h"
+
+
+
+struct s_exercise {
+	const char *mission;
+	/* This is the template which are print for the student*/
+	const char *template;
+	/* This contains the solution's code*/
+	const char *prof_solution;
+	/* This the name of the binary's solution*/
 	char* s_filename;
-	char* binary;
-	void *demo_runner_running;
-	void *run_runner_running;
-	void* w_init, *w_curr, *w_goal;
-} *exercise_t;
+	char* binary; /* Current binary of student proposition*/
+	GMutex *demo_runner_running;
+	GMutex *run_runner_running;
+	core_world_t w_init, w_curr, w_goal;
+	
+	void (* exercise_free)(exercise_t);
+};
 
 /* Memory management */
 void exercise_set_binary(exercise_t e, char* binary);

@@ -1,6 +1,6 @@
 /**
  * @lesson Logo
- * @exercise Fo,rward_Back ou pas
+ * @exercise Forward_Back ou pas
 * @world 200 200
 * 
 * @description avancer de 40 puis reculer ou pas

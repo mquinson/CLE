@@ -8,40 +8,49 @@
 #include <math.h>
 #include <unistd.h>
 
-#include "world.h"
-#include "world_view.h"
+#include "logo/world.h"
+#include "logo/entity.h"
+#include "logo/world_view.h"
+#include "core/world.h"
+#include "logo/exercise.h"
 
 typedef struct s_line {
 	double x1,y1,x2,y2;
 } s_line_t;
 
 struct s_world {
-	double sizeX, sizeY;
-	int step_delay; /* amount of milliseconds to sleep after each redraw */
+	/* */
+	struct s_core_world mother;
 
 	/* inhabitants */
 	int amount_entity;
 	entity_t *entities;
-
+	
 	/* world state */
 	int amount_lines;
 	s_line_t *lines;
+	
 };
 
-world_t world_new(double sizeX, double sizeY) {
+core_world_t world_new(double sizeX, double sizeY) {
 	world_t res = malloc(sizeof(struct s_world));
-	res->sizeX = sizeX;
-	res->sizeY = sizeY;
-	res->step_delay = 0;
+	res->mother.sizeX = sizeX;
+	res->mother.sizeY = sizeY;
+	res->mother.step_delay = 0;
+	res->mother.world_repaint = world_redraw;
+	res->mother.exercise_run = exercise_run;
+	res->mother.exercise_stop = exercise_stop;
+	res->mother.exercise_demo = exercise_demo;
 
 	res->amount_entity = 0;
 	res->entities = NULL;
 
 	res->amount_lines = 0;
 	res->lines = NULL;
-	return res;
+	return (core_world_t)res;
 }
-void world_free(world_t w) {
+void world_free(core_world_t world) {
+	world_t w = (world_t) world;
 	int it;
 	for (it=0;it<w->amount_entity;it++)
 		entity_free(w->entities[it]);
@@ -49,9 +58,14 @@ void world_free(world_t w) {
 	free(w->lines);
 	free(w);
 }
-world_t world_copy(world_t w) {
+core_world_t world_copy(core_world_t world) {
+	world_t w = (world_t) world;
 	int it;
-	world_t res = world_new(w->sizeX,w->sizeY);
+	world_t res = (world_t)world_new(w->mother.sizeX,w->mother.sizeY);
+	res->mother.step_delay = world->step_delay;
+	res->mother.world_repaint = world->world_repaint;
+	res->mother.exercise_run = world->exercise_run;
+	res->mother.exercise_stop = world->exercise_stop;
 
 	res->amount_entity = w->amount_entity;
 	res->entities = malloc(sizeof(entity_t)*w->amount_entity);
@@ -63,9 +77,13 @@ world_t world_copy(world_t w) {
 	res->amount_lines = w->amount_lines;
 	res->lines = malloc(sizeof(struct s_line)*w->amount_lines);
 	memcpy(res->lines,w->lines,sizeof(struct s_line)*w->amount_lines);
-	return res;
+	return (core_world_t)res;
 }
-int world_eq(world_t w1, world_t w2) {
+
+
+int world_eq(core_world_t world1, core_world_t world2) {
+  	world_t w1 = (world_t) world1;
+	world_t w2 = (world_t) world2;
 	int it;
 
 	if (w1->amount_entity != w2->amount_entity) return FALSE;
@@ -83,22 +101,24 @@ int world_eq(world_t w1, world_t w2) {
 	return TRUE;
 }
 /* easy getters/setters */
-int world_get_amount_entity(world_t w) {
+int world_get_amount_entity(core_world_t world) {
+	world_t w = (world_t) world;
 	return w->amount_entity;
 }
-double world_get_sizeX(world_t w) {
-	return w->sizeX;
+double world_get_sizeX(core_world_t world) {
+	return world->sizeX;
 }
-double world_get_sizeY(world_t w) {
-	return w->sizeY;
+double world_get_sizeY(core_world_t world) {
+	return world->sizeY;
 }
-void world_set_step_delay(world_t w, int step_delay) {
-	w->step_delay = step_delay;
+void world_set_step_delay(core_world_t world, int step_delay) {
+	world->step_delay = step_delay;
 }
 
 
-/* */
-void world_entity_add(world_t w, entity_t t) {
+/* Add an entity to the world, and update entity's statut*/
+void world_entity_add(core_world_t world, entity_t t) {
+	world_t w = (world_t) world;
 	w->entities = realloc(w->entities,sizeof(entity_t)*(w->amount_entity+1));
 	w->entities[w->amount_entity++] = t;
 	entity_set_world(t,w);
@@ -106,8 +126,9 @@ void world_entity_add(world_t w, entity_t t) {
 }
 
 /* Functions related to turtle moving */
-void world_line_add(world_t w, double x1, double y1, double x2, double y2){
+void world_line_add(core_world_t world, double x1, double y1, double x2, double y2){
 	/* Locking: several turtles may be changing the world at the same time */
+	world_t w = (world_t) world;
 	static GStaticMutex my_mutex = G_STATIC_MUTEX_INIT;
 	g_static_mutex_lock(&my_mutex);
 
@@ -120,27 +141,28 @@ void world_line_add(world_t w, double x1, double y1, double x2, double y2){
 
 	g_static_mutex_unlock(&my_mutex);
 
-	if (w->step_delay) {
-		usleep(w->step_delay*1000);
+	if (w->mother.step_delay) {
+		usleep(w->mother.step_delay*1000);
 		//g_thread_yield();
 	}
-	world_ask_repaint(w);
+	world_ask_repaint(world);
 }
 
 /* Helper function to implement world_turtle_foreach  */
-entity_t world_entity_geti(world_t w, int i) {
+entity_t world_entity_geti(core_world_t world, int i) {
+	world_t w = (world_t) world;
 	if (i>=w->amount_entity)
 		return NULL;
 	return w->entities[i];
 }
 
 /* Functions related to drawing */
-void world_redraw(void* we, void *c,int sizeX,int sizeY) {
+void world_redraw(core_world_t we, cairo_t *c,int sizeX,int sizeY) {
 	int it;
 	world_t w = (world_t)we;
 	cairo_t *cr = (cairo_t*)c;
-	double ratioX = sizeX/w->sizeX;
-	double ratioY = sizeY/w->sizeY;
+	double ratioX = sizeX/w->mother.sizeX;
+	double ratioY = sizeY/w->mother.sizeY;
 	double ratio = ratioX>ratioY?ratioY:ratioX;
 
     // grey background everywhere
@@ -148,12 +170,12 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
     cairo_fill(cr);
 
     // Adapt to the size of the world
-	cairo_translate(cr, fabs(sizeX-ratio*w->sizeX)/2., fabs(sizeY-ratio*w->sizeY)/2.);
+	cairo_translate(cr, fabs(sizeX-ratio*w->mother.sizeX)/2., fabs(sizeY-ratio*w->mother.sizeY)/2.);
     cairo_scale(cr, ratio, ratio);
 
     // white background to the usefull surface
     cairo_set_source_rgb( cr, 1, 1, 1 );
-    cairo_rectangle (cr, 0, 0, w->sizeX, w->sizeY);
+    cairo_rectangle (cr, 0, 0, w->mother.sizeX, w->mother.sizeY);
     //cairo_set_source_rgba (cr, 1, 0, 0, 0.80);
     cairo_fill (cr);
 
@@ -168,7 +190,7 @@ void world_redraw(void* we, void *c,int sizeX,int sizeY) {
 
     /* Draw the turtles */
     entity_t t;
-    world_foreach_entity(w,it,t) {
+    world_foreach_entity(we,it,t) {
     	cairo_move_to(cr, entity_get_x(t), entity_get_y(t));
     	cairo_rotate(cr,entity_get_heading(t));
     	cairo_rel_move_to(cr,10,0);

@@ -30,7 +30,9 @@ void addDescription(exo_content* ex, char* description);
 void addCodeEleve(exo_content* ex, char* codeEleve);
 void addCodeProf(exo_content* ex, char* codeProf);
 void setLessonName(exo_content* ex, char* lesson_name);
+int isLessonDefined(exo_content* ex);
 void setExerciseName(exo_content* ex, char* exercise_name);
+int isExerciseNameDefined(exo_content* ex);
 void freeExerciseContent(exo_content* ex);
 
 

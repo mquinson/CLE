@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "core/exercise.h"
+#include "core/world.h"
 #include "logo/logo.h"
 #include "logo/world.h"
 #include "logo/entity.h"
@@ -8,10 +8,10 @@
  * Ie, "aze" "rty" is changed into "azerty" by the preprocessor
  */
 exercise_t logo_forward_create(void) {
-	world_t w = world_new(200,200);
+	core_world_t w = world_new(200,200);
 	world_entity_add(w,entity_new(100,100,0.));
 	exercise_t res = exercise_new(
-			"Dans cet exercice, vous devez avancer de 30.\n",
+			"<b>Dans cet exercice</b>, vous devez avancer de 30.\n",
 
 			"void run() {\n"
 			"  forward(30);\n"

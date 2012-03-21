@@ -39,6 +39,11 @@ void processEntityBalise(char* line, exo_content* ex)
 
 void processLessonBalise(char* line, exo_content* ex)
 {
+  if(isLessonDefined(ex))
+  {
+    printf("Erreur lors du parsing du fichier, la leçon est défini deux fois");
+    exit(1);
+  }
   char* firstChar=line;
      while((*firstChar == '\t' || *firstChar == ' ') && *firstChar!='\n')
 	++firstChar;
@@ -56,6 +61,11 @@ void processLessonBalise(char* line, exo_content* ex)
 
 void processExerciseBalise(char* line, exo_content* ex)
 {
+  if(isExerciseNameDefined(ex))
+  {
+   printf("Erreur lors du parsing du fichier, le nom de 'exercise est défini deux fois\n");
+   exit(1);
+  }
   char* firstChar=line;
      while((*firstChar == '\t' || *firstChar == ' ') && *firstChar!='\n')
 	++firstChar;

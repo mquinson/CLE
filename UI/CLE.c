@@ -8,6 +8,7 @@
 #include <gtksourceview/gtksourcelanguagemanager.h>
 
 #include "CLE.h"
+#include "core/lesson.h"
 #include "core/exercise.h"
 
 #include <string.h> /* strlen */
@@ -246,9 +247,8 @@ void CLE_log_clear() {
  * Actually, we simply invalidate the region, and it will get repainted the next time that
  *   the gtk_main_loop gets idle. So it should be called from an external thread.
  * */
-void world_ask_repaint(void* w){
+void world_ask_repaint(core_world_t w){
 	GtkWidget *widget = NULL;
-	
 	if (!global_data || !global_data->lesson || !global_data->lesson->e_curr)
 		return; /* not ready yet to repaint stuff: still in init process */
 
@@ -272,7 +272,7 @@ cb_expose_world( GtkWidget      *widget,
                  CLE_data_t     *data )
 {
     cairo_t *cr;
-    void* w;
+    core_world_t w;
     int sizeX,sizeY;
 
 	//printf("%p: received an expose event\n",g_thread_self());
@@ -288,7 +288,7 @@ cb_expose_world( GtkWidget      *widget,
     gdk_drawable_get_size(event->window,&sizeX,&sizeY);
 
     /* Ask the world to redraw as it should */
-    (*(global_data->lesson->world_repaint))(w,cr,sizeX,sizeY);
+    w->world_repaint(w,cr,sizeX,sizeY);
     /* Destroy cairo context */
     cairo_destroy( cr );
 

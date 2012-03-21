@@ -229,6 +229,13 @@ void setLessonName(exo_content* ex, char* lesson_name)
   }
 }
 
+int isLessonDefined(exo_content* ex)
+{
+  if(ex->lesson_name)
+    return 1;
+  return 0;
+}
+
 void setExerciseName(exo_content* ex, char* exercise_name)
 {
   if(ex->exercise_name)
@@ -245,6 +252,13 @@ void setExerciseName(exo_content* ex, char* exercise_name)
     if(!isalnum(ex->exercise_file_name[i]))
       ex->exercise_file_name[i]='_';
   }
+}
+
+int isExerciseNameDefined(exo_content* ex)
+{
+  if(ex->exercise_name)
+    return 1;
+  return 0;
 }
 
 void freeExerciseContent(exo_content* ex)

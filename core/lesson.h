@@ -5,7 +5,12 @@
  *      Author: mquinson
  */
 #include <stdarg.h>
+#include <gtk/gtk.h>
+
+typedef struct s_lesson *lesson_t;
+
 #include "core/exercise.h"
+#include "core/world.h"
 
 #ifndef LESSON_H_
 #define LESSON_H_
@@ -17,20 +22,13 @@ typedef struct {
 	int rank;
 } exercise_desc;
 
-typedef struct s_lesson {
+struct s_lesson {
 	const char *title;
 	int amount;
 	exercise_t e_curr;
 	exercise_desc *exos;
-	void (*world_repaint)(void*, void*, int, int);
-	void (*exercise_run)(void* , char*);
-	void (*exercise_stop)(void*);
-	void (*exercise_demo)(void*);
-	void (* exercise_free)(exercise_t);
-	// BEGINKILL
-	void *dlmodule;
-	// ENDKILL
-} *lesson_t;
+	void *dlmodule; /* Dynamic Library which contains the lesson*/
+};
 
 lesson_t lesson_new(const char* title, int amount, ...);
 lesson_t lesson_from_file(char *filename);

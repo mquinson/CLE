@@ -11,32 +11,27 @@
 
 #include "core/exercise.h"
 #include "core/lesson.h"
+#include "core/world.h"
 #include "logo/entity_userside.h"
 #include "logo/entity.h"
 #include "logo/exercise.h"
 #include "UI/CLE.h"
 
 
-void* exercise_demo_runner(void *exo);
+void* exercise_demo_runner(void* exo);
 void exercise_run_one_entity(entity_t t);
-void exercise_run_stop(void* ex);
 
-
-static GMutex* demo_runner_running;
-static GMutex* run_runner_running;
-static char *binary; // The name of the binary
 static pid_t*pids;
 
 /* Function launched in a separate thread to run the demo without locking the UI
  * It is in charge of starting a thread for each entity to animate, and wait for their completion
  */
-void* exercise_demo_runner(void *exo) {
+void* exercise_demo_runner(void* exo) {
 	int it;
 	entity_t t;
 	
 	//static Gthread* = NULL;
 	exercise_t e = exo;
-	demo_runner_running = (GMutex *)e->demo_runner_running;
 	if(e->s_filename==NULL)
 	{
 	  char *filename= strdup("/tmp/CLEs.XXXXXX");
@@ -128,14 +123,12 @@ void* exercise_demo_runner(void *exo) {
 
 	/* Re-enable the demo running button */
 	world_set_step_delay(e->w_goal,0);
-	g_mutex_unlock(demo_runner_running);
+	g_mutex_unlock(e->demo_runner_running);
 	return NULL;
 }
 
-void exercise_demo(void* exo) {
-	exercise_t e = exo;
-	demo_runner_running = (GMutex *)e->demo_runner_running;
-	int res = g_mutex_trylock(demo_runner_running);
+void exercise_demo(exercise_t e) {
+	int res = g_mutex_trylock(e->demo_runner_running);
 	if (!res) {
 		printf("Not restarting the demo (it's already running)\n");
 		return;
@@ -145,36 +138,44 @@ void exercise_demo(void* exo) {
 	g_thread_create(exercise_demo_runner,e,0,NULL);
 }
 
-void exercise_stop(void* lesson)
+
+void exercise_demo_stop(exercise_t e) {
+	/* Actually, we don't stop the demo since we *need* it to compute the goal world.
+	 * Instead, we stop the animation and get it computing as fast as possible.
+	 * That's not what we want to do for exercise_run_stop (or whatever you call it). Instead we want to kill the child doing it.
+	 */
+	world_set_step_delay(e->w_goal,0);
+}
+
+void exercise_run_stop(exercise_t e) {
+	/* actually kill all the processes */
+	int it;
+	if (pids)
+		for (it=0;it< world_get_amount_entity(e->w_curr); it++)
+			kill(pids[it],SIGTERM);
+}
+
+void exercise_stop(lesson_t lesson)
 {
-  lesson_t l = lesson;
-  if(exercise_demo_is_running(l->e_curr))
+  if(exercise_demo_is_running(lesson->e_curr))
   {
-      exercise_demo_stop(l->e_curr);
+      exercise_demo_stop(lesson->e_curr);
   }
   else
-      exercise_run_stop(l->e_curr);
+      exercise_run_stop(lesson->e_curr);
 }
 
 
 int exercise_demo_is_running(void* exo) {
 	exercise_t e = exo;
-	demo_runner_running = (GMutex *)e->demo_runner_running;
-	int res = g_mutex_trylock(demo_runner_running);
+	int res = g_mutex_trylock(e->demo_runner_running);
 	if (res)
-		g_mutex_unlock(demo_runner_running);
+		g_mutex_unlock(e->demo_runner_running);
 
 	printf("Demo is %srunning\n",(!res?"":"NOT "));
 	return !res;
 }
-void exercise_demo_stop(void* ex) {
-	/* Actually, we don't stop the demo since we *need* it to compute the goal world.
-	 * Instead, we stop the animation and get it computing as fast as possible.
-	 * That's not what we want to do for exercise_run_stop (or whatever you call it). Instead we want to kill the child doing it.
-	 */
-	exercise_t e = ex;
-	world_set_step_delay(e->w_goal,0);
-}
+
 
 
 /* Small thread in charge of listening everything that the user's entity printf()s,
@@ -231,8 +232,8 @@ void exercise_run_one_entity(entity_t t) {
 		exit(2);
 	}// Father: listen what the child has to tell
 
-	printf("Turtle rank %d running child %s\n",entity_get_rank(t),binary);
-	pids[entity_get_rank(t)] = pid;
+	printf("Turtle rank %d running child %s\n",entity_get_rank(t),entity_get_binary(t));
+	entity_set_pid(t, pid);
 	close(f2c[0]);
 	close(c2f[1]);
 	close(cmd_f2c[0]);
@@ -285,7 +286,7 @@ void exercise_run_one_entity(entity_t t) {
 	/* the child is done. Cleaning */
 	fclose(fromchild);
 	fclose(tochild);
-	waitpid(pid,&status,0);
+	waitpid(entity_get_pid(t),&status,0);
 	if (WIFSIGNALED(status)) {
 		if (WTERMSIG(status)==SIGTERM) {
 			CLE_log_append(strdup("(execution aborded on user request)\n"));
@@ -308,7 +309,6 @@ void* exercise_run_runner(void *exo) {
 	entity_t t;
 
 	exercise_t e = exo;
-	run_runner_running = (GMutex *)e->run_runner_running;
 	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_entity(e->w_curr)));
 
 	/* Reset the goal world */
@@ -341,32 +341,19 @@ void* exercise_run_runner(void *exo) {
 		CLE_dialog_success();
 	else
 		CLE_dialog_failure("Your world differs from the goal");
-	g_mutex_unlock(run_runner_running);
-	free(pids);
-	pids=NULL;
-	unlink(binary);
-	free(binary);
+	g_mutex_unlock(e->run_runner_running);
+	unlink(e->binary);
 	return NULL;
-
-
-}
-void exercise_run_stop(void* ex) {
-	/* actually kill all the processes */
-	int it;
-	exercise_t e = ex;
-	if (pids)
-		for (it=0;it< world_get_amount_entity(e->w_curr); it++)
-			kill(pids[it],SIGTERM);
 }
 
 
-void exercise_run(void* ex, char *source) {
+
+
+void exercise_run(exercise_t e, char *source) {
 	// BEGINKILL
 	int status; // test whether they were compilation errors
-	exercise_t e = ex;
-	
-	run_runner_running = (GMutex *)e->run_runner_running;
-	int res = g_mutex_trylock(run_runner_running);
+
+	int res = g_mutex_trylock(e->run_runner_running);
 	
 	if (!res) {
 		printf("Not restarting the execution (it's already running)\n");
@@ -378,7 +365,7 @@ void exercise_run(void* ex, char *source) {
 
 	/* create 2 filenames */
 	char *filename= strdup("/tmp/CLEs.XXXXXX");
-	binary = strdup("/tmp/CLEb.XXXXXX");
+	char *binary = strdup("/tmp/CLEb.XXXXXX");
 	int ignored =mkstemp(binary); // avoid the useless warning on mktemp dangerousness
 	close(ignored);
 	int fd = mkstemp(filename);
@@ -438,7 +425,7 @@ void exercise_run(void* ex, char *source) {
 		/* Launch the exercise (in a separate thread waiting for the completion of all entities before re-enabling the button) */
 		g_thread_create(exercise_run_runner,e,0,NULL);
 	} else  {
-		g_mutex_unlock(run_runner_running);
+		g_mutex_unlock(e->run_runner_running);
 
 		if (WIFEXITED(status)) {
 			CLE_log_append(strdup("Compilation error. Abording code execution\n"));
@@ -449,13 +436,13 @@ void exercise_run(void* ex, char *source) {
 
 	unlink(filename);
 	free(filename);
+	free(binary);
 	//ENDKILL
 }
 
 
 exercise_t exercise_new(const char *mission, const char *template,
-		const char *prof_solution, void* wo) {
-	world_t w = (world_t)wo;
+		const char *prof_solution, core_world_t w) {
 	exercise_t result = malloc(sizeof(struct s_exercise));
 	result->mission = mission;
 	result->template = template;
@@ -464,10 +451,11 @@ exercise_t exercise_new(const char *mission, const char *template,
 	result->binary=NULL;
 	result->demo_runner_running = g_mutex_new ();
 	result->run_runner_running = g_mutex_new ();
-	result->w_init = (void*)w;
-	result->w_curr = (void*)world_copy(w);
-	result->w_goal = world_copy(w);
-	(*(global_data->lesson->exercise_demo))(result);
+	result->w_init = w;
+	result->w_curr = world_copy(result->w_init);
+	result->w_goal = world_copy(result->w_init);
+	(*(result->w_goal->exercise_demo))(result);
+	result->exercise_free = exercise_free;
 	return result;
 }
 
