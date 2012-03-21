@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "fork/exercise.h"
 #include "fork/fork.h"
 #include "fork/world.h"
@@ -12,7 +14,7 @@ exercise_t fork_what_the_fork_create(void) {
 	world_t w = world_new(400,400);
 	world_entity_add(w,entity_new(10.0, 300.0, 0.));
 	exercise_t res = exercise_new(
-			"Dans cet exercice, pries!!!!!!!!!!!!!\n",
+			"Dans cet exercice, prie!!!!!!!!!!!!!\n",
 
 			"void run() {\n"
 			"  fork();\n"

@@ -9,6 +9,7 @@
 #define EXERCICE_H_
 
 
+
 typedef struct s_exercise {
 	const char*mission;
 	const char*template;

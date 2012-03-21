@@ -17,21 +17,16 @@
 Structure linked to an action of a processus
 */
 typedef struct{
-	int begin;
-	int end;
-	int wait;
-	int pid_father;
-	int pid_son;
-	char *call;
+	int begin;			/**0 for */
+	int end;			/**0 if run, 1 if end, 2 if zombie*/
+	int wait;			/**0 if run, 1 if wait*/
+	int pid_father;		/**number of the pid who executes the action*/
+	int pid_son;		/**number of the pid who is the result of the action 
+						(for a wait it's the pid who is waited, for a fork it's the numbre of the pid son)*/
+	char *call;			/**name of the command called by the processus
+						(clone for a fork, wait4 for a wait, ...)
+						* these names are determined in observing the lines returned by the execution of strace */
 }action;
-
-/**
-Structure linked to a list of lines
-*/
-typedef struct{
-	int size;
-	char **lines;
-}list_lines;
 
 /**
 Allocate an action
@@ -49,48 +44,27 @@ Build an action with a line
 action *build_again_action(char *line);
 
 /**
-Allocate a list of lines
-*/
-list_lines *allocate_list_lines();
-
-/**
-Free a list of lines
-*/
-void free_list_lines(list_lines *l);
-
-/**
-Add a line into the list of lines
-*/
-void add_line(list_lines *l,char* line);
-
-/**
-Delete a line of the list of lines
-*/
-void delete_line(list_lines *l, int pos);
-
-/**
 Parse a line and create an action
+* Transform a line of strace in an acyion
 */
-action *parser(char *line);
+action *parser_command(char *line);
 
 /**
 Duplicate the processus, the son executes a strace of the executable and write the result in a FIFO
 the father read the FIFO line by line, parse and write the result in a pipe (fds)
 */
-void writing(int fds,char* name_prog);
+void writing_command(int fds,char* name_prog);
 
 /**
 Read a single line on the file descriptor fd
+* it's saved in line
 */
 int readline (int fd, char *line, int maxlen);
 
 /**
-Creat a list of lines with a string
-*/
-/*list_lines *extract_lines(char *lines);*/
-
-/**
-Know if pid_t is in list
+Know if pid is in list
+* 0 if pid is not in the list
+* 1 otherwise
 */
 int isInListing(int *listing,int size,int pid_f);
 
