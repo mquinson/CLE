@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "core/exercise.h"
 #include "core/world.h"
 #include "logo/logo.h"
@@ -20,5 +23,8 @@ exercise_t logo_forward_create(void) {
 			"  forward(30);\n"
 			"}", w);
 
+	char** functionList = malloc(sizeof(char*)*1);
+	functionList[0] = strdup("backward");
+	exercise_set_unauthorizedFunction(res, functionList, 1);
 	return res;
 }

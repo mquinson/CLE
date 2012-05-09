@@ -18,3 +18,16 @@ void exercise_set_binary(exercise_t e, char* binary){
 char* exercise_get_binary(exercise_t e){
 	return e->binary;
 }
+
+void exercise_set_unauthorizedFunction(exercise_t e, char** functionNameList, int listSize)
+{
+  if(e->unauthorizedFunction)
+    free(e->unauthorizedFunction);
+  e->unauthorizedNumber = listSize;
+  e->unauthorizedFunction = malloc(sizeof(char*)*listSize);
+  int i;
+  for(i=0; i< listSize ; ++i)
+  {
+    e->unauthorizedFunction[i] = functionNameList[i];
+  }
+}

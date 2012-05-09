@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
     /* load the exercise (must be done before we show the widget) */
       //printf("%s\n", getenv("CD"));
-      if(!access("./toto.so3", F_OK))
+      if(!access("./logo.so", F_OK))
 	CLE_set_lesson(lesson_from_file(strdup("./logo.so")));
 //    CLE_set_lesson(lesson_from_file(strdup("./recursion.so")));
 

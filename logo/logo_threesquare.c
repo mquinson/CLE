@@ -1,4 +1,6 @@
 /* logo_threesquare.c: first steps in logo: please draw 3 squares */
+#include <stdlib.h>
+#include <string.h>
 
 #include "core/exercise.h"
 #include "core/world.h"
@@ -42,6 +44,9 @@ exercise_t logo_threesquare_create(void) {
 			"  square(30);\n"
 			"}", w);
 
+	char** functionList = malloc(sizeof(char*)*1);
+	functionList[0] = strdup("get_y");
+	exercise_set_unauthorizedFunction(res, functionList, 1);
 	return res;
 }
 

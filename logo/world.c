@@ -202,3 +202,9 @@ void world_redraw(core_world_t we, cairo_t *c,int sizeX,int sizeY) {
     }
 }
 
+int world_entity_get_pid(core_world_t world, int num)
+{
+  world_t w = (world_t) world;
+  return entity_get_pid(w->entities[num]);
+}
+

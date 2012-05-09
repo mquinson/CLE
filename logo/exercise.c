@@ -145,9 +145,13 @@ void exercise_demo_stop(exercise_t e) {
 void exercise_run_stop(exercise_t e) {
 	/* actually kill all the processes */
 	int it;
-	if (pids)
-		for (it=0;it< world_get_amount_entity(e->w_curr); it++)
-			kill(pids[it],SIGTERM);
+	printf("Arret demander\n");
+	for (it=0;it< world_get_amount_entity(e->w_curr); it++)
+	{
+	  printf("Arret de la tortue %d qui a le pid %d\n",it,  world_entity_get_pid(e->w_curr, it));
+	  if(world_entity_get_pid(e->w_curr, it) != 0)
+	    kill(world_entity_get_pid(e->w_curr, it),SIGTERM);
+	}
 }
 
 void exercise_stop(lesson_t lesson)
@@ -222,7 +226,7 @@ void exercise_run_one_entity(entity_t t) {
 		close(c2f[1]);
 		close(cmd_f2c[0]);
 		close(cmd_c2f[1]);
-		execl(entity_get_binary(t),"child",NULL);
+		execlp(entity_get_binary(t),"child",NULL);
 		printf("OUCH execl failed!\n");
 		exit(2);
 	}// Father: listen what the child has to tell
@@ -383,6 +387,17 @@ void exercise_run(exercise_t e, char *source) {
 	while (todo>0)
 		todo -= write(fd,p,todo);
 
+	int i;
+	for(i=0 ; i<e->unauthorizedNumber ; ++i)
+	{
+	  write(fd, "#define ", strlen("#define "));
+	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
+	  write(fd, " You_cannot_use_", strlen(" You_cannot_use_"));
+	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
+	  write(fd, "\n", 1);
+	}
+	
+	
 	p = source;
 	todo = strlen(source);
 	while (todo>0)
@@ -452,10 +467,21 @@ exercise_t exercise_new(const char *mission, const char *template,
 	result->w_goal = world_copy(result->w_init);
 	(*(result->w_goal->exercise_demo))(result);
 	result->exercise_free = exercise_free;
+	result->unauthorizedNumber = 0;
+	result->unauthorizedFunction = NULL;
 	return result;
 }
 
 void exercise_free(exercise_t e) {
+	if(e->unauthorizedFunction)
+	{
+	  int i;
+	  for(i=0; i< e->unauthorizedNumber; ++i)
+	  {
+	    free(e->unauthorizedFunction[i]);
+	  }
+	  free(e->unauthorizedFunction);
+	}
 	world_free(e->w_init);
 	world_free(e->w_curr);
 	world_free(e->w_goal);

@@ -14,8 +14,8 @@
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
-  if(global_data->lesson == NULL)
-    return;
+   if(global_data->lesson == NULL)
+     return;
 	char *source = CLE_get_sourcecode();;
 
 	/* Switch the notebook to the first page (which is #0), where the student code runs */

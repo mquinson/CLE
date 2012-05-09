@@ -25,6 +25,8 @@ struct s_exercise {
 	/* This the name of the binary's solution*/
 	char* s_filename;
 	char* binary; /* Current binary of student proposition*/
+	char** unauthorizedFunction; /* Name of function which used are unauthorized for the exercise resolution */
+	int unauthorizedNumber; /* Number of function which are prohibited */
 	GMutex *demo_runner_running;
 	GMutex *run_runner_running;
 	core_world_t w_init, w_curr, w_goal;
@@ -35,6 +37,8 @@ struct s_exercise {
 /* Memory management */
 void exercise_set_binary(exercise_t e, char* binary);
 char* exercise_get_binary(exercise_t e);
+
+void exercise_set_unauthorizedFunction(exercise_t e, char** functionNameList, int listSize);
 
 
 

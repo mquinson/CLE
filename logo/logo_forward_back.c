@@ -23,5 +23,6 @@ exercise_t logo_forward_back_create(void) {
 " \n"
 "}\n"
 , w);
+	
 	return res;
 }

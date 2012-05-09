@@ -23,6 +23,7 @@ void world_set_step_delay(core_world_t w, int step_delay);
 double world_get_sizeX(core_world_t w);
 double world_get_sizeY(core_world_t w);
 
+int world_entity_get_pid(core_world_t w, int num);
 
 /* state modifications from the turtle (protected functions) */
 void world_entity_add(core_world_t w, entity_t t);

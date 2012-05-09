@@ -1,11 +1,11 @@
-/* This file was automatically generated from logo/entity_userside.c */
+/* This file was automatically generated from logo/turtle_userside.c */
 /* DO NOT EDIT */
 
-#ifndef USERSIDE
-#define USERSIDE
+#ifndef LOGO_ENTITY_USERSIDE
+#define LOGO_ENTITY_USERSIDE
 static char *userside = 
     "/*\n"
-    " * turtle_userside.c: functions callable from user code\n"
+    " * entity_userside.c: functions callable from user code\n"
     " */\n"
     "#include <stdio.h>\n"
     "\n"
@@ -20,19 +20,32 @@ static char *userside =
     "	vfprintf(out, fmt, va);\n"
     "}\n"
     "\n"
+    "double response(char* fmt, ...)\n"
+    "{\n"
+    "  double res=0;\n"
+    "  va_list va;\n"
+    "  va_start(va,fmt);\n"
+    "  /* The next line causes crash, do not decomment */\n"
+    "  //vfscanf(in, fmt, va);\n"
+    "  return res;\n"
+    "}\n"
+    "\n"
     "\n"
     "/* easy getters */\n"
     "double get_x(void) {\n"
     "	cmd(\"100 GETX\\n\");\n"
-    "	return 0;\n"
+    "	double res;\n"
+    "	return response(\"%lf\", &res);\n"
     "}\n"
     "double get_y(void) {\n"
     "	cmd(\"101 GETY\\n\");\n"
-    "	return 0;\n"
+    "	double res;\n"
+    "	return response(\"%lf\", &res);\n"
     "}\n"
     "double get_heading(void) {\n"
     "	cmd(\"102 GETHEADING\\n\");\n"
-    "	return 0;\n"
+    "	double res;\n"
+    "	return response(\"%lf\", &res);\n"
     "}\n"
     "/* User API */\n"
     "void forward(double steps) {\n"
@@ -59,10 +72,13 @@ static char *userside =
     "	out = fdopen(4,\"w\");\n"
     "	run();\n"
     "	fflush(out);\n"
+    "	fflush(in);\n"
+    "	fclose(in);\n"
+    "	fclose(out);\n"
     "	return 0;\n"
     "}\n"
     "// ENDKILL\n"
 ;
-#endif /* USERSIDE */
-/* This file was automatically generated from logo/entity_userside.c */
+#endif /* LOGO_ENTITY_USERSIDE */
+/* This file was automatically generated from logo/turtle_userside.c */
 /* DO NOT EDIT */

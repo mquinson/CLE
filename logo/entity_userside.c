@@ -14,19 +14,32 @@ static void cmd(char *fmt, ...) {
 	vfprintf(out, fmt, va);
 }
 
+double response(char* fmt, ...)
+{
+  double res=0;
+  va_list va;
+  va_start(va,fmt);
+  /* The next line causes crash, do not decomment */
+  //vfscanf(in, fmt, va);
+  return res;
+}
+
 
 /* easy getters */
 double get_x(void) {
 	cmd("100 GETX\n");
-	return 0;
+	double res;
+	return response("%lf", &res);
 }
 double get_y(void) {
 	cmd("101 GETY\n");
-	return 0;
+	double res;
+	return response("%lf", &res);
 }
 double get_heading(void) {
 	cmd("102 GETHEADING\n");
-	return 0;
+	double res;
+	return response("%lf", &res);
 }
 /* User API */
 void forward(double steps) {
@@ -53,6 +66,9 @@ int main(int argc,char *argv[]) {
 	out = fdopen(4,"w");
 	run();
 	fflush(out);
+	fflush(in);
+	fclose(in);
+	fclose(out);
 	return 0;
 }
 // ENDKILL
