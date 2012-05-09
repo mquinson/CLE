@@ -30,7 +30,6 @@ void* exercise_demo_runner(void* exo) {
 	int it;
 	entity_t t;
 	
-	//static Gthread* = NULL;
 	exercise_t e = exo;
 	if(e->s_filename==NULL)
 	{
@@ -108,10 +107,6 @@ void* exercise_demo_runner(void* exo) {
 	entity_set_code(t,exercise_run_one_entity);
 	entity_set_binary(t, e->s_filename);
 	}
-	
-	if (pids)
-		free(pids);
-	pids=malloc (sizeof(pid_t)*world_get_amount_entity(e->w_goal));
 
 	/* Launch all the runners */
 	world_foreach_entity(e->w_goal,it,t)

@@ -14,6 +14,8 @@
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
+  if(global_data->lesson == NULL)
+    return;
 	char *source = CLE_get_sourcecode();;
 
 	/* Switch the notebook to the first page (which is #0), where the student code runs */
@@ -30,12 +32,16 @@ cb_run_clicked(GtkButton *button) {
 }
 G_MODULE_EXPORT void
 cb_stop_clicked(GtkButton *button) {
+  if(global_data->lesson == NULL)
+    return;
 	printf("Stop clicked\n");
 	(*(global_data->lesson->e_curr->w_curr->exercise_stop))(global_data->lesson);
 }
 
 G_MODULE_EXPORT void
 cb_demo_clicked(GtkButton *button) {
+  if(global_data->lesson == NULL)
+    return;
 	/* Switch the notebook to the second page (which is #1), where the demo is */
 	gtk_notebook_set_current_page(global_data->world_views,1);
 

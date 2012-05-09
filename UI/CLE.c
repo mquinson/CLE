@@ -13,6 +13,7 @@
 
 #include <string.h> /* strlen */
 #include <stdlib.h> /* free */
+#include <unistd.h>/* access */
 
 /* Prototypes of manually connected signals */
 G_MODULE_EXPORT void cb_can_redo_changed(GtkButton *button);
@@ -99,7 +100,8 @@ int main(int argc, char **argv) {
 
     /* load the exercise (must be done before we show the widget) */
       //printf("%s\n", getenv("CD"));
-    CLE_set_lesson(lesson_from_file(strdup("./logo.so")));
+      if(!access("./toto.so3", F_OK))
+	CLE_set_lesson(lesson_from_file(strdup("./logo.so")));
 //    CLE_set_lesson(lesson_from_file(strdup("./recursion.so")));
 
     /* Show window & start main loop */
@@ -271,6 +273,9 @@ cb_expose_world( GtkWidget      *widget,
 		         GdkEventExpose *event,
                  CLE_data_t     *data )
 {
+  if(global_data->lesson == NULL)
+    return( TRUE );
+  
     cairo_t *cr;
     core_world_t w;
     int sizeX,sizeY;
