@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <gdk/gdk.h>
 #include <gtksourceview/gtksourceview.h>
@@ -11,6 +12,7 @@
 #include "UI/CLE.h"
 #include "core/exercise.h"
 #include "core/lesson.h"
+#include "core/world.h"
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
@@ -22,7 +24,7 @@ cb_run_clicked(GtkButton *button) {
 	gtk_notebook_set_current_page(global_data->world_views,0);
 
 	// BEGINKILL
-	(*(global_data->lesson->e_curr->w_curr->exercise_run))(global_data->lesson->e_curr,source);
+	(*(global_data->lesson->e_curr->w_curr[0]->exercise_run))(global_data->lesson->e_curr,source);
 	// REPLACE
 	///* Display what should be complied. You should replace this with your own code */
 	//CLE_log_append(strdup("Run clicked. We should compile that code:\n"));
@@ -35,7 +37,7 @@ cb_stop_clicked(GtkButton *button) {
   if(global_data->lesson == NULL)
     return;
 	printf("Stop clicked\n");
-	(*(global_data->lesson->e_curr->w_curr->exercise_stop))(global_data->lesson);
+	(*(global_data->lesson->e_curr->w_curr[0]->exercise_stop))(global_data->lesson);
 }
 
 G_MODULE_EXPORT void
@@ -45,7 +47,17 @@ cb_demo_clicked(GtkButton *button) {
 	/* Switch the notebook to the second page (which is #1), where the demo is */
 	gtk_notebook_set_current_page(global_data->world_views,1);
 
-	(*(global_data->lesson->e_curr->w_curr->exercise_demo))(global_data->lesson->e_curr);
+	(*(global_data->lesson->e_curr->w_curr[0]->exercise_demo))(global_data->lesson->e_curr);
+}
+
+G_MODULE_EXPORT void
+world_selection_change(GtkComboBox *arg0, gpointer   user_data){
+  if(gtk_combo_box_get_active(arg0) ==-1)
+    return;
+  
+  global_data->current_world_expose = gtk_combo_box_get_active(arg0);
+  world_ask_repaint(global_data->lesson->e_curr->w_curr[global_data->current_world_expose]);
+  world_ask_repaint(global_data->lesson->e_curr->w_goal[global_data->current_world_expose]);
 }
 
 /* The about dialog window */
@@ -62,4 +74,6 @@ G_MODULE_EXPORT void
 on_aboutdialog_close(GtkDialog *arg0, gpointer   user_data){
 	gtk_widget_destroy(GTK_WIDGET(diag));
 }
+
+
 

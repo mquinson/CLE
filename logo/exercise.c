@@ -1,11 +1,11 @@
 
 
-#include <string.h> // KILLIT
+#include <string.h>
 #include <stdlib.h>
-#include <stdio.h>  // KILLIT
-#include <unistd.h> // KILLIT
-#include <sys/types.h> // KILLIT
-#include <sys/wait.h> // KILLIT
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <errno.h>
 
 
@@ -20,8 +20,6 @@
 
 void* exercise_demo_runner(void* exo);
 void exercise_run_one_entity(entity_t t);
-
-static pid_t*pids;
 
 /* Function launched in a separate thread to run the demo without locking the UI
  * It is in charge of starting a thread for each entity to animate, and wait for their completion
@@ -95,29 +93,50 @@ void* exercise_demo_runner(void* exo) {
 	  free(filename);
 	}
 	
-	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_entity(e->w_goal)));
+	int amount_entity = 0;
+	int i;
+	for(i=0; i< e->worldAmount; ++i)
+	  amount_entity += world_get_amount_entity(e->w_goal[i]);
+	
+	
+	GThread **runners = malloc(sizeof(GThread*)*(amount_entity));
 
 	
 	
-	/* Reset the goal world */
-	world_free(e->w_goal);
-	e->w_goal = world_copy(e->w_init);
-	world_set_step_delay(e->w_goal,50); /* FIXME: should be configurable from UI */
-	world_foreach_entity(e->w_goal,it,t){
-	entity_set_code(t,exercise_run_one_entity);
-	entity_set_binary(t, e->s_filename);
+	  /* Reset all goal world */
+	  for(i=0; i< e->worldAmount; ++i)
+	  {
+	    world_free(e->w_goal[i]);
+	    e->w_goal[i] = world_copy(e->w_init[i]);
+	    world_set_step_delay(e->w_goal[i],50); /* FIXME: should be configurable from UI */
+	    world_foreach_entity(e->w_goal[i],it,t){
+	    entity_set_code(t,exercise_run_one_entity);
+	    entity_set_binary(t, e->s_filename);
+	  }
 	}
 
 	/* Launch all the runners */
-	world_foreach_entity(e->w_goal,it,t)
-	runners[it] = g_thread_create(entity_run,t,1,NULL);
+	int acc_entity=0;;
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  world_foreach_entity(e->w_goal[i],it,t)
+	  runners[it+acc_entity] = g_thread_create(entity_run,t,1,NULL);
+	  
+	  acc_entity += world_get_amount_entity(e->w_goal[i]);
+	}
 
 	/* Wait the end of all runners */
-	world_foreach_entity(e->w_goal,it,t)
-	g_thread_join(runners[it]);
-
+	for(i=0; i< amount_entity; ++i)
+	{
+	  g_thread_join(runners[i]);
+	}
+	
 	/* Re-enable the demo running button */
-	world_set_step_delay(e->w_goal,0);
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  world_set_step_delay(e->w_goal[i],0);
+	}
+	
 	g_mutex_unlock(e->demo_runner_running);
 	return NULL;
 }
@@ -139,18 +158,25 @@ void exercise_demo_stop(exercise_t e) {
 	 * Instead, we stop the animation and get it computing as fast as possible.
 	 * That's not what we want to do for exercise_run_stop (or whatever you call it). Instead we want to kill the child doing it.
 	 */
-	world_set_step_delay(e->w_goal,0);
+	int i;
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  world_set_step_delay(e->w_goal[i],0);
+	}
+	
 }
 
 void exercise_run_stop(exercise_t e) {
 	/* actually kill all the processes */
 	int it;
-	printf("Arret demander\n");
-	for (it=0;it< world_get_amount_entity(e->w_curr); it++)
+	int i;
+	for(i=0; i< e->worldAmount; ++i)
 	{
-	  printf("Arret de la tortue %d qui a le pid %d\n",it,  world_entity_get_pid(e->w_curr, it));
-	  if(world_entity_get_pid(e->w_curr, it) != 0)
-	    kill(world_entity_get_pid(e->w_curr, it),SIGTERM);
+	  for (it=0;it< world_get_amount_entity(e->w_curr[i]); it++)
+	  {
+	    if(world_entity_get_pid(e->w_curr[i], it) != 0)
+	      kill(world_entity_get_pid(e->w_curr[i], it),SIGTERM);
+	  }
 	}
 }
 
@@ -226,8 +252,8 @@ void exercise_run_one_entity(entity_t t) {
 		close(c2f[1]);
 		close(cmd_f2c[0]);
 		close(cmd_c2f[1]);
-		execlp(entity_get_binary(t),"child",NULL);
-		printf("OUCH execl failed!\n");
+		execl(entity_get_binary(t),"child",NULL);
+		perror("OUCH execl failed!\n");
 		exit(2);
 	}// Father: listen what the child has to tell
 
@@ -309,38 +335,61 @@ void* exercise_run_runner(void *exo) {
 	entity_t t;
 
 	exercise_t e = exo;
-	GThread **runners = malloc(sizeof(GThread*)*(world_get_amount_entity(e->w_curr)));
 
 	/* Reset the goal world */
-	world_free(e->w_curr);
-	e->w_curr = world_copy(e->w_init);
-	world_set_step_delay(e->w_curr,50); /* FIXME: should be configurable from UI */
-	world_foreach_entity(e->w_curr,it,t){
-	entity_set_code(t,exercise_run_one_entity);
-	entity_set_binary(t, exercise_get_binary(e));
+	int amount_entity = 0;
+	int i;
+	for(i=0; i< e->worldAmount; ++i)
+	  amount_entity += world_get_amount_entity(e->w_init[i]);
+	
+	GThread **runners = malloc(sizeof(GThread*)*(amount_entity));
+	
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  world_free(e->w_curr[i]);
+	  e->w_curr[i] = world_copy(e->w_init[i]);
+	  world_set_step_delay(e->w_curr[i],50); /* FIXME: should be configurable from UI */
+	  world_foreach_entity(e->w_curr[i],it,t){
+	    entity_set_code(t,exercise_run_one_entity);
+	    entity_set_binary(t, exercise_get_binary(e));
+	  }
 	}
-
-	if (pids)
-		free(pids);
-	pids=malloc (sizeof(pid_t)*world_get_amount_entity(e->w_curr));
+	
 
 	printf("Launch all entities\n");
 	/* Launch all the runners */
-	world_foreach_entity(e->w_curr,it,t)
-	runners[it] = g_thread_create(entity_run,t,1,NULL);
+	int acc_entity=0;;
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  world_foreach_entity(e->w_curr[i],it,t)
+	  runners[it+acc_entity] = g_thread_create(entity_run,t,1,NULL);
+	  
+	  acc_entity += world_get_amount_entity(e->w_curr[i]);
+	}
 
 	/* Wait the end of all runners */
-	world_foreach_entity(e->w_curr,it,t)
-	g_thread_join(runners[it]);
+	for(it = 0; it<amount_entity; ++it)
+	  g_thread_join(runners[it]);
 
 	/* Re-enable the run running button */
-	world_set_step_delay(e->w_curr,0);
-	printf("End of execution\n");
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  world_set_step_delay(e->w_curr[i],0);
+	}
 
-	if (world_eq(e->w_curr,e->w_goal))
-		CLE_dialog_success();
+	int success=1;
+	for(i=0; i< e->worldAmount; ++i)
+	{
+	  if (!world_eq(e->w_curr[i],e->w_goal[i]))
+	  {
+	    success = 0;
+	    break;
+	  }
+	}
+	if (success)
+	  CLE_dialog_success();
 	else
-		CLE_dialog_failure("Your world differs from the goal");
+	  CLE_dialog_failure("One world differs from its goal");
 	g_mutex_unlock(e->run_runner_running);
 	unlink(e->binary);
 	return NULL;
@@ -350,7 +399,6 @@ void* exercise_run_runner(void *exo) {
 
 
 void exercise_run(exercise_t e, char *source) {
-	// BEGINKILL
 	int status; // test whether they were compilation errors
 
 	int res = g_mutex_trylock(e->run_runner_running);
@@ -448,12 +496,10 @@ void exercise_run(exercise_t e, char *source) {
 	unlink(filename);
 	free(filename);
 	free(binary);
-	//ENDKILL
 }
 
 
-exercise_t exercise_new(const char *mission, const char *template,
-		const char *prof_solution, core_world_t w) {
+exercise_t exercise_new(const char *mission, const char *template, const char *prof_solution) {
 	exercise_t result = malloc(sizeof(struct s_exercise));
 	result->mission = mission;
 	result->template = template;
@@ -462,28 +508,73 @@ exercise_t exercise_new(const char *mission, const char *template,
 	result->binary=NULL;
 	result->demo_runner_running = g_mutex_new ();
 	result->run_runner_running = g_mutex_new ();
-	result->w_init = w;
-	result->w_curr = world_copy(result->w_init);
-	result->w_goal = world_copy(result->w_init);
-	(*(result->w_goal->exercise_demo))(result);
+	result->w_init = NULL;
+	result->w_curr = NULL;
+	result->w_goal = NULL;
+	result->worldAmount = 0;
 	result->exercise_free = exercise_free;
 	result->unauthorizedNumber = 0;
 	result->unauthorizedFunction = NULL;
 	return result;
 }
 
+void exercise_add_world(exercise_t e, core_world_t world)
+{
+   ++(e->worldAmount);
+   int i;
+   core_world_t* temp = malloc(sizeof(core_world_t*)*e->worldAmount);
+   for(i=0; i<e->worldAmount-1; ++i)
+   {
+     temp[i] = e->w_init[i];
+   }
+   temp[e->worldAmount-1] = world;
+   if(e->w_init)
+     free(e->w_init);
+   e->w_init = temp;
+   
+   
+   temp = malloc(sizeof(core_world_t*)*e->worldAmount);
+   for(i=0; i<e->worldAmount-1; ++i)
+   {
+     temp[i] = e->w_curr[i];
+   }
+   temp[e->worldAmount-1] = world_copy(world);
+   if(e->w_curr)
+     free(e->w_curr);
+   e->w_curr = temp;
+   
+   
+   temp = malloc(sizeof(core_world_t*)*e->worldAmount);
+   for(i=0; i<e->worldAmount-1; ++i)
+   {
+     temp[i] = e->w_goal[i];
+   }
+   temp[e->worldAmount-1] = world_copy(world);
+   (*(temp[e->worldAmount-1]->exercise_demo))(e);
+   if(e->w_goal)
+     free(e->w_goal);
+   e->w_goal = temp;
+}
+
+
 void exercise_free(exercise_t e) {
+    int i;
 	if(e->unauthorizedFunction)
 	{
-	  int i;
 	  for(i=0; i< e->unauthorizedNumber; ++i)
 	  {
 	    free(e->unauthorizedFunction[i]);
 	  }
 	  free(e->unauthorizedFunction);
 	}
-	world_free(e->w_init);
-	world_free(e->w_curr);
-	world_free(e->w_goal);
+	for(i=0; i< e->worldAmount ; ++i)
+	{
+	  world_free(e->w_init[i]);
+	  world_free(e->w_curr[i]);
+	  world_free(e->w_goal[i]);
+	}
+	free(e->w_init);
+	free(e->w_curr);
+	free(e->w_goal);
 	free(e);
 }

@@ -21,8 +21,7 @@ exercise_t logo_forward_back_create(void) {
 "	forward(40);\n"
 "	backward(40);\n"
 " \n"
-"}\n"
-, w);
-	
+"}\n");
+	exercise_add_world(res, w);
 	return res;
 }

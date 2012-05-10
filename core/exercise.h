@@ -29,7 +29,8 @@ struct s_exercise {
 	int unauthorizedNumber; /* Number of function which are prohibited */
 	GMutex *demo_runner_running;
 	GMutex *run_runner_running;
-	core_world_t w_init, w_curr, w_goal;
+	core_world_t *w_init, *w_curr, *w_goal;
+	int worldAmount;
 	
 	void (* exercise_free)(exercise_t);
 };

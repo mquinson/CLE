@@ -21,8 +21,13 @@ exercise_t logo_forward_create(void) {
 			"}",
 			"void run() {\n"
 			"  forward(30);\n"
-			"}", w);
-
+			"}");
+	exercise_add_world(res, w);
+	
+	core_world_t w2 = world_new(200,200);
+	world_entity_add(w2,entity_new(100,100,0.));
+	exercise_add_world(res, w2);
+	
 	char** functionList = malloc(sizeof(char*)*1);
 	functionList[0] = strdup("backward");
 	exercise_set_unauthorizedFunction(res, functionList, 1);

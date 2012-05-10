@@ -20,6 +20,7 @@ G_MODULE_EXPORT void cb_can_redo_changed(GtkButton *button);
 G_MODULE_EXPORT void cb_can_undo_changed(GtkButton *button);
 G_MODULE_EXPORT void cb_menu_change_lesson(GtkMenuItem *menuitem, gpointer data);
 G_MODULE_EXPORT void cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data);
+G_MODULE_EXPORT void world_selection_change(GtkComboBox *arg0, gpointer   user_data);
 
 
 int main(int argc, char **argv) {
@@ -35,6 +36,9 @@ int main(int argc, char **argv) {
     /* Allocate data structure */
     global_data = g_slice_new( CLE_data_t );
     global_data->lesson = NULL;
+    global_data->current_world_expose =0;
+    
+    global_data->world_selection_model = gtk_tree_store_new(1, G_TYPE_STRING);
 
     /* Create new GtkBuilder object */
     global_data->builder = gtk_builder_new();
@@ -54,6 +58,7 @@ int main(int argc, char **argv) {
     CH_GET_WIDGET(global_data->builder, log_view, global_data );
 
     global_data->world_views = CH_GET_OBJECT(global_data->builder, world_views, GTK_NOTEBOOK);
+    global_data->world_selection = CH_GET_OBJECT(global_data->builder, world_chooser, GTK_COMBO_BOX_TEXT);
 
     /* Setup the source_view by telling it that we will display C source */
     GtkSourceLanguageManager *lang_manager = gtk_source_language_manager_get_default();
@@ -97,6 +102,8 @@ int main(int argc, char **argv) {
 
     /* Connect signals */
     gtk_builder_connect_signals( global_data->builder, global_data );
+    
+    gtk_combo_box_set_model((GtkComboBox *)global_data->world_selection, (GtkTreeModel *)global_data->world_selection_model);
 
     /* load the exercise (must be done before we show the widget) */
       //printf("%s\n", getenv("CD"));
@@ -131,7 +138,6 @@ void CLE_set_lesson(lesson_t l) {
     gtk_menu_shell_append(GTK_MENU_SHELL(submenu), item);
     gtk_menu_append(GTK_MENU_SHELL(submenu),gtk_separator_menu_item_new());
     // The exercise entries
-    printf("Debut de la mise a jour des exos\n");
     int it;
     for (it=0;it<l->amount;it++) {
     	item = gtk_menu_item_new_with_label(l->exos[it].label);
@@ -142,10 +148,8 @@ void CLE_set_lesson(lesson_t l) {
     // Show it all
     gtk_widget_show_all(submenu);
 	gtk_menu_item_set_submenu(menu_lesson,submenu);
-	printf("Fin de la mis een place de la leçon\n");
 }
 void CLE_exercise_has_changed() {
-	printf("Debut du changement de l'excercice\n");
 	GtkSourceBuffer *sb;
 
 	CLE_log_clear();
@@ -159,7 +163,20 @@ void CLE_exercise_has_changed() {
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sb), global_data->lesson->e_curr->template, -1);
 	gtk_source_buffer_end_not_undoable_action (sb);
     gtk_text_buffer_set_modified (GTK_TEXT_BUFFER (sb), FALSE);
-    printf("Fin du chargement de l'exercice\n");
+    
+    gtk_tree_store_clear((GtkTreeStore*)gtk_combo_box_get_model((GtkComboBox*)global_data->world_selection));
+    
+    GtkTreeIter  iter;
+    
+    char buff[50];
+    int i;
+    for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
+    {
+      sprintf(buff, "world %d", i);
+      gtk_tree_store_append(global_data->world_selection_model,&iter,NULL);
+      gtk_tree_store_set(global_data->world_selection_model, &iter ,0,buff,-1);
+    }
+    gtk_combo_box_set_active((GtkComboBox*)global_data->world_selection, 0);
 }
 
 char *CLE_get_sourcecode() {
@@ -178,7 +195,6 @@ char *CLE_get_sourcecode() {
  *   the main thread anyway. This unfortunately forces to copy with strdup every
  *   arguments passed to CLE_log_append. Pitty.
  */
-// BEGINKILL
 static gboolean dialog_from_main(gpointer data) {
 	GtkWidget *dialog;
 	if (data) {
@@ -207,7 +223,8 @@ void CLE_dialog_success(){
 void CLE_dialog_failure(char *reason) {
 	g_idle_add(dialog_from_main,reason);
 }
-// ENDKILL
+
+
 static gboolean log_append_from_main(gpointer data) {
     GtkTextIter end;
     GtkTextBuffer *buff = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->log_view));
@@ -254,9 +271,9 @@ void world_ask_repaint(core_world_t w){
 	if (!global_data || !global_data->lesson || !global_data->lesson->e_curr)
 		return; /* not ready yet to repaint stuff: still in init process */
 
-	if (w == global_data->lesson->e_curr->w_curr)
+	if (w == global_data->lesson->e_curr->w_curr[global_data->current_world_expose])
 		widget = global_data->drawing_world;
-	else if (w == global_data->lesson->e_curr->w_goal)
+	else if (w == global_data->lesson->e_curr->w_goal[global_data->current_world_expose])
 		widget = global_data->drawing_objective;
 	if (widget) {
 		gtk_widget_queue_draw(widget);
@@ -284,9 +301,9 @@ cb_expose_world( GtkWidget      *widget,
 
     /* Select the right world (current or objective) depending on the widget calling us*/
     if (widget == data->drawing_world)
-    	w = global_data->lesson->e_curr->w_curr;
+      w = global_data->lesson->e_curr->w_curr[global_data->current_world_expose];
     else
-    	w = global_data->lesson->e_curr->w_goal;
+      w = global_data->lesson->e_curr->w_goal[global_data->current_world_expose];
 
     /* Create cairo context from GdkWindow */
     cr = gdk_cairo_create( event->window );

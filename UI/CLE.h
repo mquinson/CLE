@@ -45,12 +45,17 @@ struct CLE_data
     GtkWidget *mission_view;      /* Text area where the mission is displayed */
     GtkWidget *source_view;       /* Source editor */
     GtkWidget *log_view;          /* Text area serving as a console */
+    
+    GtkComboBoxText *world_selection;
+    GtkTreeStore *world_selection_model;
 
     GtkNotebook *world_views;
 
     /* the current lesson */
     lesson_t lesson;
+    int current_world_expose;
 };
+void world_ask_repaint(core_world_t w);
 
 // BEGINKILL
 void CLE_dialog_success(void);

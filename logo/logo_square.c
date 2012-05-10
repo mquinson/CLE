@@ -41,7 +41,7 @@ exercise_t logo_square_create(void) {
 "}\n"
 "\n"
 "\n"
-"\n"
-, w);
+"\n");
+	exercise_add_world(res, w);
 	return res;
 }

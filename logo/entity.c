@@ -17,8 +17,7 @@ struct s_entity {
 	double x,y;
 	double heading;
 	int pen_is_down;
-	/*Contains the name of the binary which the turtle launch*/
-	char* binary;
+	char* binary;  /*Contains the name of the binary which the turtle launch*/
 	/*Contains the pid number of the processus which is launch for the turtle*/
 	pid_t pid;
 	f_run_t run_fct;

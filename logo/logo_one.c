@@ -25,7 +25,7 @@ exercise_t logo_one_create(void) {
 "	square(40);\n"
 "}\n"
 "\n"
-"\n"
-, w);
+"\n");
+	exercise_add_world(res, w);
 	return res;
 }
