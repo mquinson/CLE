@@ -470,6 +470,18 @@ void *entity_fork_run(void *param){
 				}
 				free_action(action);
 			}
+			int pmax;
+			if(pr->nb_t < 2){
+				pmax = (int) entity_get_x(pr->list_t[0]);
+			}
+			else{
+				pmax = (int) entity_get_x(pr->list_t[1]);
+			}
+			if(pmax >= (int)world_get_sizeX((core_world_t)pr->w) - 15){
+				world_set_sizeX((core_world_t)pr->w, world_get_sizeX((core_world_t)pr->w)+30);
+				world_set_sizeY((core_world_t)pr->w, world_get_sizeY((core_world_t)pr->w));
+				world_ask_repaint((core_world_t)pr->w);	
+			}
 		}
 		if(run)
 			usleep((MAX_SPEED-s)*10000);
@@ -510,7 +522,7 @@ void* exercise_run_runner(void *exo) {
 	/*Test strace*/
 	int fd[2];
 	pipe(fd);
-	param_execute_proc *pep = allocate_execute_proc(e->s_filename,fd[1]);
+	param_execute_proc *pep = allocate_execute_proc(e->binary,fd[1]);
 	GThread *te = g_thread_create(execute_proc,(void*)pep,1,NULL);
 	if (pids)
 		free(pids);
@@ -591,8 +603,10 @@ void exercise_run(exercise_t ex, char *source) {
 
 	p = source;
 	todo = strlen(source);
-	while (todo>0)
+	printf("source : %s\n",source);
+	while (todo>0){
 		todo -= write(fd,p,todo);
+	}
 
 	close(fd);
 

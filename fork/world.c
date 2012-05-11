@@ -118,6 +118,12 @@ double world_get_sizeX(core_world_t w) {
 double world_get_sizeY(core_world_t w) {
 	return w->sizeY;
 }
+void world_set_sizeX(core_world_t w, double x) {
+	w->sizeX = x;
+}
+void world_set_sizeY(core_world_t w, double y) {
+	w->sizeY = y;
+}
 void world_set_step_delay(core_world_t w, int step_delay) {
 	w->step_delay = step_delay;
 }
