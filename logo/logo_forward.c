@@ -17,15 +17,17 @@ exercise_t logo_forward_create(void) {
 			"<b>Dans cet exercice</b>, vous devez avancer de 30.\n",
 
 			"void run() {\n"
-			"  forward(30);\n"
+			"  if(get_x()>50)\n"
+			" 	forward(30);\n"
 			"}",
 			"void run() {\n"
-			"  forward(30);\n"
+			"  if(get_x()>50)\n"
+			" 	forward(30);\n"
 			"}");
 	exercise_add_world(res, w);
 	
 	core_world_t w2 = world_new(200,200);
-	world_entity_add(w2,entity_new(100,100,0.));
+	world_entity_add(w2,entity_new(0,0,0.));
 	exercise_add_world(res, w2);
 	
 	char** functionList = malloc(sizeof(char*)*1);

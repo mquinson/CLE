@@ -280,12 +280,15 @@ void exercise_run_one_entity(entity_t t) {
 		switch(cmd){
 		case 100:
 			fprintf(tochild,"%lf\n",entity_get_x(t));
+			fflush(tochild);
 			break;
 		case 101:
 			fprintf(tochild,"%lf\n",entity_get_y(t));
+			fflush(tochild);
 			break;
 		case 102:
 			fprintf(tochild,"%lf\n",entity_get_heading(t));
+			fflush(tochild);
 			break;
 		case 103:
 			entity_forward(t,arg);
