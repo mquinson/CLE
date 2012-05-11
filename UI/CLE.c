@@ -1,5 +1,9 @@
 /* CLE.c: main function of the CLE project */
 
+#define READ_BUFFER_SIZE   4096
+
+//#define MARK_TYPE   "error"
+#define MAX_NB_LOG_ERRORS 10
 
 #include <gtk/gtk.h>
 
@@ -7,13 +11,16 @@
 #include <gtksourceview/gtksourcelanguage.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
 
-#include "CLE.h"
+#include "UI/CLE.h"
 #include "core/lesson.h"
 #include "core/exercise.h"
 
 #include <string.h> /* strlen */
 #include <stdlib.h> /* free */
 #include <unistd.h>/* access */
+
+
+static listMarks list_marks = NULL;
 
 /* Prototypes of manually connected signals */
 G_MODULE_EXPORT void cb_can_redo_changed(GtkButton *button);
@@ -22,6 +29,18 @@ G_MODULE_EXPORT void cb_menu_change_lesson(GtkMenuItem *menuitem, gpointer data)
 G_MODULE_EXPORT void cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data);
 G_MODULE_EXPORT void world_selection_change(GtkComboBox *arg0, gpointer   user_data);
 
+static gchar * mark_tooltip_func (GtkSourceMark *mark, gpointer user_data) {
+  GtkTextBuffer *buf;
+  GtkTextIter iter;
+  gint line;
+  
+  buf = gtk_text_mark_get_buffer (GTK_TEXT_MARK (mark));
+  
+  gtk_text_buffer_get_iter_at_mark (buf, &iter, GTK_TEXT_MARK (mark));
+  line = gtk_text_iter_get_line (&iter) + 1;
+  
+  return exercice_get_log(global_data->lesson->e_curr,line);
+}
 
 int main(int argc, char **argv) {
     GError     *error = NULL;
@@ -65,7 +84,7 @@ int main(int argc, char **argv) {
     GtkSourceLanguage *c_lang= gtk_source_language_manager_get_language(lang_manager, "c");
     GtkSourceBuffer *buff= gtk_source_buffer_new_with_language(c_lang);
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(global_data->source_view),GTK_TEXT_BUFFER(buff));
-    // gtk_source_view_set_show_line_marks (GTK_SOURCE_VIEW(global_data->source_view),1);
+    gtk_source_view_set_show_line_marks (GTK_SOURCE_VIEW(global_data->source_view),1);
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(global_data->source_view),1);
 
 
@@ -102,10 +121,31 @@ int main(int argc, char **argv) {
     item = CH_GET_OBJECT(global_data->builder,menu_undo,GTK_WIDGET);
 	gtk_widget_set_sensitive(item, gtk_source_buffer_can_undo(sb));
 
+	
+	GdkColor color;
+	gdk_color_parse ("red", &color);
+	gtk_source_view_set_mark_category_background (GTK_SOURCE_VIEW(global_data->source_view), "error", &color);
+	gtk_source_view_set_mark_category_icon_from_stock (GTK_SOURCE_VIEW(global_data->source_view), "error", GTK_STOCK_NO);
+	gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), "error", 1);
+	gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), "error", mark_tooltip_func, NULL, NULL);
+	
+	gdk_color_parse ("yellow", &color);
+	gtk_source_view_set_mark_category_background (GTK_SOURCE_VIEW(global_data->source_view), "warning", &color);
+	gtk_source_view_set_mark_category_icon_from_stock (GTK_SOURCE_VIEW(global_data->source_view), "warning", GTK_STOCK_DIALOG_WARNING);
+	gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), "warning", 2);
+	gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), "warning", mark_tooltip_func, NULL, NULL);
+	
     /* Connect signals */
     gtk_builder_connect_signals( global_data->builder, global_data );
     
     gtk_combo_box_set_model((GtkComboBox *)global_data->world_selection, (GtkTreeModel *)global_data->world_selection_model);
+    
+    
+    list_marks = malloc(sizeof(listMarks));
+    list_marks->marks = malloc(sizeof(GtkSourceMark*)*MAX_NB_LOG_ERRORS);
+    list_marks->nbMarks = 0;
+    
+    
 
     /* load the exercise (must be done before we show the widget) */
       //printf("%s\n", getenv("CD"));
@@ -423,4 +463,50 @@ G_MODULE_EXPORT void
 cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data) {
 	int num=*(int*)data;
 	lesson_set_exo(global_data->lesson,num);
+}
+
+
+void CLE_clear_mark() {
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
+  
+  int i;
+  for (i=0;i<list_marks->nbMarks;i++) {
+    gtk_text_buffer_delete_mark(buffer,GTK_TEXT_MARK(list_marks->marks[i]));
+  }
+  list_marks->nbMarks=0;
+  
+}
+
+void CLE_add_mark(int line, int type) {
+  GtkSourceMark *mark=NULL;
+
+  char string_line[100];
+  sprintf(string_line, "%i",line);
+  
+  if(type == ERROR_LOG)
+    mark= gtk_source_mark_new(NULL,"error");
+  else if(type == WARNING_LOG)
+    mark= gtk_source_mark_new(NULL,"warning");
+  else
+    return;
+  
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
+  
+  GtkTextIter iter;
+  gtk_text_buffer_get_iter_at_line (buffer, &iter, line-1);
+  
+  gtk_text_buffer_add_mark(buffer,GTK_TEXT_MARK(mark),&iter);
+  
+  // Save mark pt
+  if (list_marks->nbMarks!=0 && list_marks->nbMarks%MAX_NB_LOG_ERRORS==0 ) {
+    list_marks->marks = realloc(list_marks->marks, list_marks->nbMarks + MAX_NB_LOG_ERRORS);
+    if (list_marks->marks==NULL) {
+      perror("Realloc failed in CLE_add_mark\n");
+      exit(1);
+    }
+  }
+  list_marks->marks[list_marks->nbMarks] = mark;
+  list_marks->nbMarks++;
+  
+  //printf("Erreur en ligne %d\n",line);
 }

@@ -13,8 +13,12 @@
 typedef struct s_exercise *exercise_t;
 
 #include "core/world.h"
+#define MAX_NB_LOG_ERRORS 10
 
-
+typedef struct {
+  int line;
+  char* msg;
+} log_error_s, *log_error;
 
 struct s_exercise {
 	const char *mission;
@@ -32,14 +36,26 @@ struct s_exercise {
 	core_world_t *w_init, *w_curr, *w_goal;
 	int worldAmount;
 	
+	int gcc_report_new; //
+	log_error* gcc_logs;
+	int nb_logs;
+	char* gcc_report;
+	
 	void (* exercise_free)(exercise_t);
 };
+
 
 /* Memory management */
 void exercise_set_binary(exercise_t e, char* binary);
 char* exercise_get_binary(exercise_t e);
 
 void exercise_set_unauthorizedFunction(exercise_t e, char** functionNameList, int listSize);
+char* exercice_get_log(exercise_t e, int line);
+void exercice_add_log(exercise_t e, int line, char* msg);
+void exercise_clear_log(exercise_t e);
+
+void display_compilation_errors(exercise_t e);
+void exercise_append_gcc_log(exercise_t e,char* log, int size);
 
 
 

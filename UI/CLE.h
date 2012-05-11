@@ -5,7 +5,12 @@
 #ifndef CLE_H_
 #define CLE_H_
 
+
+#define ERROR_LOG 0
+#define WARNING_LOG 1
+
 #include <gtk/gtk.h>
+#include <gtksourceview/gtksourcemark.h>
 #include "core/lesson.h"
 
 
@@ -62,11 +67,20 @@ struct CLE_data
     lesson_t lesson;
     int current_world_expose;
 };
+
+typedef struct {
+  int nbMarks;
+  GtkSourceMark** marks;
+} listMarks_s, *listMarks;
+
 void world_ask_repaint(core_world_t w);
 
 // BEGINKILL
 void CLE_dialog_success(void);
 void CLE_dialog_failure(char *reason);
 // ENDKILL
+
+void CLE_clear_mark();
+void CLE_add_mark(int line, int type);
 
 #endif /* CLE_H_ */

@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <regex.h>
 
 
 #include "core/exercise.h"
@@ -395,7 +396,57 @@ void* exercise_run_runner(void *exo) {
 	return NULL;
 }
 
-
+// void display_execution_errors(exercise_t e) {
+//   
+//   CLE_clear_mark();
+//   exercise_clear_log(e);
+//   
+//   if (e->gcc_report != NULL && e->gcc_report_new) {
+//     char *first_char_pt=e->gcc_report, 
+//     *last_char_pt = strchr(e->gcc_report,'\n');
+//     
+//     regex_t preg;
+//     if ( regcomp (&preg, "^/tmp/CLEs.[0-9A-Za-z]{6}:[0-9]+:", REG_NOSUB | REG_EXTENDED)) {
+//       perror("Erreur de compilation d'expression régulière\n");
+//       exit(1);
+//     }
+//     
+//     while(last_char_pt!=NULL) {
+//       printf("New line found\n");
+//       int length = last_char_pt-first_char_pt;
+//       char* line = strndup(first_char_pt,length);
+//       int match = regexec (&preg, line, 0, NULL, 0);
+//       if (match==0) {
+// 	printf("line matches\n");
+// 	Display this line
+// 	char *string_numline = strchr(line,':');
+// 	char *end = strchr(string_numline+1, ':');
+// 	*end ='\0';
+// 	int numline = atoi(string_numline+1);
+// 	*end = ':';
+// 	
+// 	char *second_2p = strchr(end+1, ':');
+// 	if(!second_2p)
+// 	  second_2p = end+1;
+// 	
+// 	
+// 	printf("%s\n", string_numline);
+// 	
+// 	exercice_add_log(e,numline,strdup(second_2p+2));
+// 	CLE_add_mark(numline);
+// 	
+//       }
+//       free(line);
+//       first_char_pt = last_char_pt +1;
+//       last_char_pt = strchr(first_char_pt,'\n');
+//     }
+//     regfree(&preg);
+//     
+//     e->gcc_report_new=0;
+//     free(e->gcc_report);
+//     e->gcc_report=NULL;
+//   }
+// }
 
 
 void exercise_run(exercise_t e, char *source) {
@@ -445,6 +496,9 @@ void exercise_run(exercise_t e, char *source) {
 	  write(fd, "\n", 1);
 	}
 	
+	write(fd,"\n#line 1 \"", strlen("\n#line 1 \""));
+	write(fd,filename, strlen(filename));
+	write(fd,"\"\n", strlen("\"\n"));
 	
 	p = source;
 	todo = strlen(source);
@@ -474,10 +528,14 @@ void exercise_run(exercise_t e, char *source) {
 		char buff[1024];
 		int got;
 		while ((got = read(gcc[0],&buff,1023))>0) {
-			buff[got] = '\0';
-			CLE_log_append(strdup(buff));
+		  exercise_append_gcc_log(e, buff, got);
+		  buff[0] = '\0';
 		}
 		waitpid(pid,&status,0);
+		close(gcc[0]);
+		if (e->gcc_report_new)
+		  CLE_log_append(strdup(e->gcc_report));
+		display_compilation_errors(e);
 	}
 	exercise_set_binary(e, binary);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
@@ -512,6 +570,13 @@ exercise_t exercise_new(const char *mission, const char *template, const char *p
 	result->w_curr = NULL;
 	result->w_goal = NULL;
 	result->worldAmount = 0;
+	
+	result->gcc_report_new=0;
+	result->gcc_report = NULL;
+	
+	result->nb_logs = 0;
+	result->gcc_logs = malloc(sizeof(log_error)*MAX_NB_LOG_ERRORS);
+	
 	result->exercise_free = exercise_free;
 	result->unauthorizedNumber = 0;
 	result->unauthorizedFunction = NULL;
