@@ -36,7 +36,7 @@ struct s_exercise {
 	core_world_t *w_init, *w_curr, *w_goal;
 	int worldAmount;
 	
-	int gcc_report_new; // For ggc report analyse (Point 4.6)
+	int gcc_report_new; //
 	log_error* gcc_logs;
 	int nb_logs;
 	char* gcc_report;
@@ -54,7 +54,7 @@ char* exercice_get_log(exercise_t e, int line);
 void exercice_add_log(exercise_t e, int line, char* msg);
 void exercise_clear_log(exercise_t e);
 
-void display_execution_errors(exercise_t e);
+void display_compilation_errors(exercise_t e);
 void exercise_append_gcc_log(exercise_t e,char* log, int size);
 
 

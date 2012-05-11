@@ -5,6 +5,10 @@
 #ifndef CLE_H_
 #define CLE_H_
 
+
+#define ERROR_LOG 0
+#define WARNING_LOG 1
+
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksourcemark.h>
 #include "core/lesson.h"
@@ -70,6 +74,6 @@ void CLE_dialog_failure(char *reason);
 // ENDKILL
 
 void CLE_clear_mark();
-void CLE_add_mark(int line);
+void CLE_add_mark(int line, int type);
 
 #endif /* CLE_H_ */

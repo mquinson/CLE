@@ -527,7 +527,6 @@ void exercise_run(exercise_t e, char *source) {
 		close(gcc[1]);
 		char buff[1024];
 		int got;
-		int length=0;
 		while ((got = read(gcc[0],&buff,1023))>0) {
 		  exercise_append_gcc_log(e, buff, got);
 		  buff[0] = '\0';
@@ -536,7 +535,7 @@ void exercise_run(exercise_t e, char *source) {
 		close(gcc[0]);
 		if (e->gcc_report_new)
 		  CLE_log_append(strdup(e->gcc_report));
-		display_execution_errors(e);
+		display_compilation_errors(e);
 	}
 	exercise_set_binary(e, binary);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {

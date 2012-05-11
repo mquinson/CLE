@@ -75,7 +75,7 @@ void exercise_clear_log(exercise_t e){
   e->nb_logs=0;
 }
 
-void display_execution_errors(exercise_t e) {
+void display_compilation_errors(exercise_t e) {
   
   CLE_clear_mark();
   exercise_clear_log(e);
@@ -91,12 +91,10 @@ void display_execution_errors(exercise_t e) {
     }
     
     while(last_char_pt!=NULL) {
-      printf("New line found\n");
       int length = last_char_pt-first_char_pt;
       char* line = strndup(first_char_pt,length);
       int match = regexec (&preg, line, 0, NULL, 0);
       if (match==0) {
-	printf("line matches\n");
 	// Display this line
 	char *string_numline = strchr(line,':');
 	char *end = strchr(string_numline+1, ':');
@@ -108,11 +106,11 @@ void display_execution_errors(exercise_t e) {
 	if(!second_2p)
 	  second_2p = end+1;
 	
-	
-	printf("%s\n", string_numline);
-	
 	exercice_add_log(e,numline,strdup(second_2p+2));
-	CLE_add_mark(numline);
+	if(!strncmp(second_2p+2, "error", strlen("error")))
+	  CLE_add_mark(numline, ERROR_LOG);
+	else if(!strncmp(second_2p+2, "warning", strlen("warning")))
+	  CLE_add_mark(numline, WARNING_LOG);
 	
       }
       free(line);

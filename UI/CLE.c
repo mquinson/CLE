@@ -2,7 +2,7 @@
 
 #define READ_BUFFER_SIZE   4096
 
-#define MARK_TYPE   "error"
+//#define MARK_TYPE   "error"
 #define MAX_NB_LOG_ERRORS 10
 
 #include <gtk/gtk.h>
@@ -11,7 +11,7 @@
 #include <gtksourceview/gtksourcelanguage.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
 
-#include "CLE.h"
+#include "UI/CLE.h"
 #include "core/lesson.h"
 #include "core/exercise.h"
 
@@ -119,19 +119,25 @@ int main(int argc, char **argv) {
     item = CH_GET_OBJECT(global_data->builder,menu_undo,GTK_WIDGET);
 	gtk_widget_set_sensitive(item, gtk_source_buffer_can_undo(sb));
 
+	
+	GdkColor color;
+	gdk_color_parse ("red", &color);
+	gtk_source_view_set_mark_category_background (GTK_SOURCE_VIEW(global_data->source_view), "error", &color);
+	gtk_source_view_set_mark_category_icon_from_stock (GTK_SOURCE_VIEW(global_data->source_view), "error", GTK_STOCK_NO);
+	gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), "error", 1);
+	gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), "error", mark_tooltip_func, NULL, NULL);
+	
+	gdk_color_parse ("yellow", &color);
+	gtk_source_view_set_mark_category_background (GTK_SOURCE_VIEW(global_data->source_view), "warning", &color);
+	gtk_source_view_set_mark_category_icon_from_stock (GTK_SOURCE_VIEW(global_data->source_view), "warning", GTK_STOCK_DIALOG_WARNING);
+	gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), "warning", 2);
+	gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), "warning", mark_tooltip_func, NULL, NULL);
+	
     /* Connect signals */
     gtk_builder_connect_signals( global_data->builder, global_data );
     
     gtk_combo_box_set_model((GtkComboBox *)global_data->world_selection, (GtkTreeModel *)global_data->world_selection_model);
     
-    
-    /*Define mark categorie*/
-    GdkColor color;
-    gdk_color_parse ("red", &color);
-    gtk_source_view_set_mark_category_background (GTK_SOURCE_VIEW(global_data->source_view), MARK_TYPE, &color);
-    gtk_source_view_set_mark_category_icon_from_stock (GTK_SOURCE_VIEW(global_data->source_view), MARK_TYPE, GTK_STOCK_NO);
-    gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), MARK_TYPE, 1);
-    gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), MARK_TYPE, mark_tooltip_func, NULL, NULL);
     
     list_marks = malloc(sizeof(listMarks));
     list_marks->marks = malloc(sizeof(GtkSourceMark*)*MAX_NB_LOG_ERRORS);
@@ -469,12 +475,18 @@ void CLE_clear_mark() {
   
 }
 
-void CLE_add_mark(int line) {
+void CLE_add_mark(int line, int type) {
+  GtkSourceMark *mark=NULL;
+
   char string_line[100];
-  printf("add mark to line %d\n", line);
   sprintf(string_line, "%i",line);
   
-  GtkSourceMark *mark= gtk_source_mark_new(NULL,MARK_TYPE);
+  if(type == ERROR_LOG)
+    mark= gtk_source_mark_new(NULL,"error");
+  else if(type == WARNING_LOG)
+    mark= gtk_source_mark_new(NULL,"warning");
+  else
+    return;
   
   GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
   
