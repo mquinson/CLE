@@ -8,6 +8,13 @@
 #include <gtk/gtk.h>
 #include "core/lesson.h"
 
+
+int isrunning;
+int step_by_step;
+int stop;
+int run;
+int s; //the speed of execution of the exercise
+
 typedef struct CLE_data CLE_data_t;
 CLE_data_t *global_data;
 

@@ -11,13 +11,15 @@
 #include "fork/entity.h"
 #include "core/exercise.h"
 
+#define MAX_SPEED 100
 
-exercise_t exercise_new(const char *mission, const char *template,const char *prof_solution, void* wo);
 
-void exercise_demo(void* e);
+exercise_t exercise_new(const char *mission, const char *template,const char *prof_solution);
+
+void exercise_demo(exercise_t e);
 int exercise_demo_is_running(void* e);
 void exercise_demo_stop(void* e);
-void exercise_stop(void* l);
+void exercise_stop(struct s_lesson* l);
 
 void *entity_fork_run(void *pr);
  
@@ -42,6 +44,13 @@ typedef struct{
 	world_t w;
 }param_runner;
 
+typedef struct{
+	char *binary;
+	int fd;
+}param_execute_proc;
+
+param_execute_proc *allocate_execute_proc(char *binary,int fd);
+
 tree_fork *allocate_tree_fork(tree_fork *tff);
 void tree_fork_add_son(tree_fork *tf,param_runner *pr,int pid);
 
@@ -49,7 +58,7 @@ void free_tree_fork(tree_fork *tf);
 
 int tree_fork_nb_branch_up(tree_fork *tf);
 
-param_runner *allocate_param_runner(entity_t t,int fd,world_t w);
+param_runner *allocate_param_runner(entity_t t,int fd, world_t w);
 
 void free_param_runner(param_runner *pr);
 
@@ -60,9 +69,10 @@ int find_pos_pid(int *list_pid,int size,int pid);
 void stop_zombies_son(param_runner *pr,int pos_f,int *color);
 
 /* Running related functions */
-void exercise_run(void* e, char *source);
-void exercise_run_stop(void* e);
+void exercise_run(exercise_t e, char *source);
+void exercise_run_stop(exercise_t e);
 
 void exercise_free(exercise_t e);
+void exercise_add_world(exercise_t e, core_world_t world);
 
 #endif

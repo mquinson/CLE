@@ -1,12 +1,11 @@
 DEPENDENCIES=gtksourceview-2.0 libglade-2.0
 
 CFLAGS=-g `pkg-config --cflags $(DEPENDENCIES)` -Werror -Wall -I.
-LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl -lm
+LDFLAGS=`pkg-config --libs $(DEPENDENCIES)` -export-dynamic -ldl -lm -lgthread-2.0
 PARSER_CFLAGS=-g -Werror -Wall -I.
 
 CC = gcc
-PLUGINS=logo.so 
-#fork.so
+PLUGINS=logo.so fork.so
 
 LOGO_EXO_SOURCE = $(wildcard logo/logo_*.c)
 LOGO_CORE_SOURCE = logo/world.c logo/entity.c logo/exercise.c
@@ -63,8 +62,8 @@ logo.so: logo/logo.c $(LOGO_HEADERS) $(LOGO_CORE_SOURCE) $(LOGO_EXO_SOURCE)
 
 #Fork plugin lesson section
 ###########################
-#fork.so: fork/fork.c $(FORK_HEADERS) $(FORK_CORE_SOURCE) $(FORK_EXO_SOURCE)
-#	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
+fork.so: fork/fork.c $(FORK_HEADERS) $(FORK_CORE_SOURCE) $(FORK_EXO_SOURCE)
+	gcc -shared -fPIC $(CFLAGS) -o $@ $^ -I.
 
 
 clean: 

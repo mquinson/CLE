@@ -85,7 +85,7 @@ int entity_get_end(entity_t t) {
 static void move_to(entity_t t, double new_x, double new_y) {
 	/* FIXME: account for clipping */
 	if (t->pen_is_down)
-		world_line_add(t->world,t->x,t->y,new_x,new_y,t->pen_color);
+		world_line_add((core_world_t)t->world,t->x,t->y,new_x,new_y,t->pen_color);
 	t->x = new_x;
 	t->y = new_y;
 }

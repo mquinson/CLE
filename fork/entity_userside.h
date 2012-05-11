@@ -1,15 +1,14 @@
 /* This file was automatically generated from logo/turtle_userside.c */
 /* DO NOT EDIT */
 
-#ifndef USERSIDE
-#define USERSIDE
+#ifndef FORK_ENTITY_USERSIDE
+#define FORK_ENTITY_USERSIDE
 static char *userside = 
     "/*\n"
     " * turtle_userside.c: functions callable from user code\n"
     " */\n"
     "#include <stdio.h>\n"
     "#include <unistd.h>\n"
-    "\n"
     "// BEGINKILL\n"
     "#include <stdarg.h>\n"
     "\n"
@@ -64,6 +63,6 @@ static char *userside =
     "}\n"
     "// ENDKILL\n"
 ;
-#endif /* USERSIDE */
+#endif /* FORK_ENTITY_USERSIDE */
 /* This file was automatically generated from logo/turtle_userside.c */
 /* DO NOT EDIT */

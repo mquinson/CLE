@@ -1,4 +1,7 @@
 #include "teststrace.h"
+#include "../UI/CLE.h"
+#include "exercise.h"
+
 
 action *allocate_action(){
 	action *a = malloc(sizeof(action));
@@ -186,18 +189,23 @@ void writing_command(int fds,char* name_prog){
     	int fd = open("res/resultat.txt",O_WRONLY);
     	int fd1 = open("res/CLE1.txt",O_WRONLY);
     	while((got=getline(&buf, &len, buffer))!=-1){
-      		write(fd,buf,got);
-      		action = parser_command(buf);
-	  		sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
-	  		write(fd1,line,strlen(line));
-	  		write(fds,line,strlen(line));
-	  		free_action(action);
-    	}
+			printf("Nouvelle ecriture niveau 1\n");
+			write(fd,buf,got);
+			action = parser_command(buf);
+			sprintf(line,"%d/%d/%s/%d/%d/%d\n",action->begin,action->pid_father,action->call,action->wait,action->pid_son,action->end);
+			write(fd1,line,strlen(line));
+			write(fds,line,strlen(line));
+			free_action(action);
+			if(run)
+				usleep((MAX_SPEED-s)*10000);
+		}
+		
+    	printf("Fin niveau 1\n");
     	free(line);
     	free(buf);
     	close(fd);
   	}
-  	wait(NULL);
+  	//wait(NULL);
 }
 
 int readline (int fd, char *line, int maxlen){
@@ -250,10 +258,13 @@ void read_info(int fdl,int fdw){
 	clear_listing(listing,50);
 	clear_listing(bool_listing,50);
 	do{
+		printf("Boucle attente niveau 2\nrun : %d\tgot : %d\tstep_by_step : %d\n",run,got,step_by_step);
 		if ((got = readline(fdl, buf, 500)) < 0){
       		got=1;
         }
+		
 		else if(got>0){
+			printf("Message recu niveau 2\n");
 			buf[got]='\0';
 			/*Build action and manage the turns*/
 			action = build_again_action(buf);
@@ -282,27 +293,34 @@ void read_info(int fdl,int fdw){
 			write(fd,line,strlen(line));
 			free_action(action);
 		}
+		if(run)
+			usleep((MAX_SPEED-s)*10000);
 	}
 	while(got>0);
+	printf("Fin lecture niveau 2\n");
 	free(bool_listing);
 	free(buf);
+	close(fdw);
 	free(listing);
 }
 
-void execute_proc(char *name_binary,int fd){
+void *execute_proc(void *pepp){
 	/*Tester si le fifo existe et creer le fifo si necessaire*/
 	mkdir("res",01777);
 	mkfifo("res/lala",0666);
+	param_execute_proc *pep = (param_execute_proc *) pepp;
 	int fde[2];
 	pipe(fde);
 	if(!fork()){
 		close(fde[0]);
-		writing_command(fde[1],name_binary);
+		writing_command(fde[1],pep->binary);
 		close(fde[1]);
 	}
 	else{
 		close(fde[1]);
-		read_info(fde[0],fd);
+		read_info(fde[0],pep->fd);
 		close(fde[0]);
 	}
+	
+	return NULL;
 }

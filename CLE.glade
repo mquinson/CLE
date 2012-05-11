@@ -96,6 +96,14 @@
 		      </object>
 		    </child>
 		    <child>
+                      <object class="GtkMenuItem" id="menu_step_by_step">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">_Step-by-step</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="cb_step_by_step_clicked"/>
+                      </object>
+             </child>
+		    <child>
 		      <object class="GtkSeparatorMenuItem" id="menu_sep1">
 			<property name="visible">True</property>
 			<property name="can_focus">False</property>
@@ -312,6 +320,37 @@
 		<property name="position">2</property>
 	      </packing>
 	    </child>
+	    <child>
+              <object class="GtkButton" id="buttonStepbystep">
+                <property name="label" translatable="yes">Step by step</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="cb_step_by_step_clicked"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHScale" id="hscale">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="update_policy">discontinuous</property>
+                <property name="adjustment">adjustment</property>
+                <property name="lower_stepper_sensitivity">on</property>
+                <property name="upper_stepper_sensitivity">on</property>
+                <property name="fill_level">1000</property>
+                <property name="digits">0</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
 	  </object>
 	  <packing>
 	    <property name="expand">False</property>
@@ -494,5 +533,10 @@
 	</child>
       </object>
     </child>
+  </object>
+  <object class="GtkAdjustment" id="adjustment">
+    <property name="value">100</property>
+    <property name="upper">100</property>
+    <signal name="value_changed" handler="cb_scale_speed_value_changed"/>
   </object>
 </interface>

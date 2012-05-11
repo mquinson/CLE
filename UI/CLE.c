@@ -82,6 +82,8 @@ int main(int argc, char **argv) {
     item = CH_GET_OBJECT(global_data->builder,menu_stop,GTK_WIDGET);
     gtk_widget_add_accelerator(item,"activate",gag,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
     item = CH_GET_OBJECT(global_data->builder,menu_undo,GTK_WIDGET);
+    gtk_widget_add_accelerator(item,"activate",gag,'P',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+    item = CH_GET_OBJECT(global_data->builder,menu_undo,GTK_WIDGET);
     gtk_widget_add_accelerator(item,"activate",gag,'Z',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
     item = CH_GET_OBJECT(global_data->builder,menu_cut,GTK_WIDGET);
     gtk_widget_add_accelerator(item,"activate",gag,'X',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);

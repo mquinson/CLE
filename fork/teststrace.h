@@ -81,6 +81,6 @@ void read_info(int fdl,int fdw);
 /**
 Execute the processus and analyse them (param is a reading_exection *)
 */
-void execute_proc(char *name_binary,int fd);
+void *execute_proc(void *pepp);
 
 #endif // TESTSTRACE_H_INCLUDED 
