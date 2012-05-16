@@ -7,7 +7,8 @@
 #include <signal.h>
 #include <math.h>
 #include <string.h>
-#include "world.h"
+#include "logo/world.h"
+#include "UI/CLE.h"
 
 const double EPSILON = .0000001;
 
@@ -154,3 +155,31 @@ void entity_set_rank(entity_t t, int rank) {
 int entity_get_rank(entity_t t) {
 	return t->rank;
 }
+
+char* entity_get_description(entity_t t)
+{
+    char res[100];
+    int world_number =-1;
+    int entity_number =-1;
+    int i;
+    entity_t tmp;
+    for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
+    {
+      if(global_data->lesson->e_curr->w_curr[i] == (core_world_t)t->world)
+      {
+	world_number=i;
+	break;
+      }
+    }
+    
+    world_foreach_entity((core_world_t)t->world, i, tmp)
+      if(tmp == t)
+      {
+	entity_number = i;
+	break;
+      }
+    
+    sprintf(res, "[entity %d : world %d ]", entity_number, world_number);
+    return strdup(res);
+}
+

@@ -9,14 +9,14 @@
 #include <errno.h>
 #include <regex.h>
 
-
+#include "UI/CLE.h"
 #include "core/exercise.h"
 #include "core/lesson.h"
 #include "core/world.h"
 #include "logo/entity_userside.h"
 #include "logo/entity.h"
 #include "logo/exercise.h"
-#include "UI/CLE.h"
+
 
 
 void* exercise_demo_runner(void* exo);
@@ -203,17 +203,34 @@ int exercise_demo_is_running(void* exo) {
 }
 
 
-
+struct log_listener_data{
+  int pipe;
+  valgrind_log_s* valgrind_log;
+};
 /* Small thread in charge of listening everything that the user's entity printf()s,
  * and add it to the log console */
-void *exercise_run_log_listener(void *pipe) {
-	int fd = *(int*)pipe;
+void *exercise_run_log_listener(void *d) {
+    struct log_listener_data *data  = d;
+    valgrind_log_s *vl = data->valgrind_log;
     char buff[1024];
+    char* tmp = buff;
     int got;
-    while ((got = read(fd,&buff,1023))>0) {
-      buff[got] = '\0';
-      CLE_log_append(strdup(buff));
+    while ((got = read(data->pipe,tmp,1))>0) {
+      if(*tmp=='\n')
+      {
+	++tmp;
+	*tmp='\0';
+	vl->line = buff;
+	if(display_valgrind_errors(vl))
+	  CLE_log_append(strdup(buff));
+	
+	tmp=buff;
+      }
+      else
+	++tmp;
     }
+    free(data->valgrind_log);
+    free(data);
     return NULL;
 }
 
@@ -253,7 +270,11 @@ void exercise_run_one_entity(entity_t t) {
 		close(c2f[1]);
 		close(cmd_f2c[0]);
 		close(cmd_c2f[1]);
-		execl(entity_get_binary(t),"child",NULL);
+		
+		char exec_name[50];
+		sprintf(exec_name, ".%s", entity_get_binary(t));
+		
+		execl("/usr/bin/valgrind","/usr/bin/valgrind", entity_get_binary(t),NULL);
 		perror("OUCH execl failed!\n");
 		exit(2);
 	}// Father: listen what the child has to tell
@@ -266,8 +287,17 @@ void exercise_run_one_entity(entity_t t) {
 	close(cmd_f2c[0]);
 	close(cmd_c2f[1]);
 
+	/*Create structure used by the log listener*/
+	struct log_listener_data* data = malloc(sizeof(struct log_listener_data));
+	data->pipe = c2f[0];
+	data->valgrind_log = malloc(sizeof(valgrind_log_s));
+	data->valgrind_log->header = entity_get_description(t);
+	data->valgrind_log->source_name = strdup("CLEs.");
+	data->valgrind_log->source_limit = CLE_get_codesource_size();
+	GThread * log_listener = g_thread_create(exercise_run_log_listener,data,1,NULL);
+	
+	
 	/* Main interaction loop with the child */
-	GThread * log_listener = g_thread_create(exercise_run_log_listener,&(c2f[0]),1,NULL);
 	FILE *fromchild=fdopen(cmd_c2f[0],"r");
 	FILE *tochild=fdopen(cmd_f2c[1],"w");
 	char *buff=NULL;
@@ -398,58 +428,6 @@ void* exercise_run_runner(void *exo) {
 	unlink(e->binary);
 	return NULL;
 }
-
-// void display_execution_errors(exercise_t e) {
-//   
-//   CLE_clear_mark();
-//   exercise_clear_log(e);
-//   
-//   if (e->gcc_report != NULL && e->gcc_report_new) {
-//     char *first_char_pt=e->gcc_report, 
-//     *last_char_pt = strchr(e->gcc_report,'\n');
-//     
-//     regex_t preg;
-//     if ( regcomp (&preg, "^/tmp/CLEs.[0-9A-Za-z]{6}:[0-9]+:", REG_NOSUB | REG_EXTENDED)) {
-//       perror("Erreur de compilation d'expression régulière\n");
-//       exit(1);
-//     }
-//     
-//     while(last_char_pt!=NULL) {
-//       printf("New line found\n");
-//       int length = last_char_pt-first_char_pt;
-//       char* line = strndup(first_char_pt,length);
-//       int match = regexec (&preg, line, 0, NULL, 0);
-//       if (match==0) {
-// 	printf("line matches\n");
-// 	Display this line
-// 	char *string_numline = strchr(line,':');
-// 	char *end = strchr(string_numline+1, ':');
-// 	*end ='\0';
-// 	int numline = atoi(string_numline+1);
-// 	*end = ':';
-// 	
-// 	char *second_2p = strchr(end+1, ':');
-// 	if(!second_2p)
-// 	  second_2p = end+1;
-// 	
-// 	
-// 	printf("%s\n", string_numline);
-// 	
-// 	exercice_add_log(e,numline,strdup(second_2p+2));
-// 	CLE_add_mark(numline);
-// 	
-//       }
-//       free(line);
-//       first_char_pt = last_char_pt +1;
-//       last_char_pt = strchr(first_char_pt,'\n');
-//     }
-//     regfree(&preg);
-//     
-//     e->gcc_report_new=0;
-//     free(e->gcc_report);
-//     e->gcc_report=NULL;
-//   }
-// }
 
 
 void exercise_run(exercise_t e, char *source) {

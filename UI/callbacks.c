@@ -73,13 +73,6 @@ cb_step_by_step_clicked(GtkButton *button) {
 		isrunning = 1;
 		(*(global_data->lesson->e_curr->w_curr[0]->exercise_run))(global_data->lesson->e_curr,source);
 	}
-	
-	// REPLACE
-	///* Display what should be complied. You should replace this with your own code */
-	//CLE_log_append(strdup("Run clicked. We should compile that code:\n"));
-	//CLE_log_append(strdup(source));
-	// ENDKILL
-	//free(source);
 }
 
 

@@ -20,7 +20,7 @@
 #include <unistd.h>/* access */
 
 
-static listMarks list_marks = NULL;
+static listMarks *list_marks = NULL;
 
 /* Prototypes of manually connected signals */
 G_MODULE_EXPORT void cb_can_redo_changed(GtkButton *button);
@@ -151,7 +151,6 @@ int main(int argc, char **argv) {
       //printf("%s\n", getenv("CD"));
       if(!access("./logo.so", F_OK))
 	CLE_set_lesson(lesson_from_file(strdup("./logo.so")));
-//    CLE_set_lesson(lesson_from_file(strdup("./recursion.so")));
 
     /* Show window & start main loop */
     gtk_widget_show( global_data->main_window );
@@ -231,6 +230,28 @@ char *CLE_get_sourcecode() {
 
     return text;
 }
+
+int CLE_get_sourcecode_size(void){
+  GtkTextIter start, end;
+  char *text;
+  int size=0;
+  GtkTextBuffer *buff = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
+  
+  gtk_text_buffer_get_bounds (GTK_TEXT_BUFFER(buff), &start, &end);
+  text = gtk_text_buffer_get_text (GTK_TEXT_BUFFER (buff), &start, &end, TRUE);
+  
+  while(*text != '\0')
+  {
+    if(*text == '\n')
+      ++size;
+  }
+  
+  return size;
+}
+
+
+
+
 /*
  * the Gnome UI shouldn't be accessed by more than one thread at the same time.
  * so, requests to the UI comming from the other threads should be executed by

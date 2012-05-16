@@ -125,6 +125,81 @@ void display_compilation_errors(exercise_t e) {
   }
 }
 
+
+int display_valgrind_errors(valgrind_log_s *data) {
+  static char* last_error_message = NULL;
+  static int error_stack = 0;
+  
+    regex_t preg;
+    if ( regcomp (&preg, "^==[0-9]*==", REG_NOSUB | REG_EXTENDED)) {
+      perror("Erreur de compilation d'expression régulière\n");
+      exit(1);
+    }
+      char* line = strdup(data->line);
+      int match = regexec (&preg, line, 0, NULL, 0);
+      if (match==0) {
+	char* tmp;
+	if((tmp=strstr(line, "Invalid")))
+	{
+	  if(last_error_message)
+	    free(last_error_message);
+	  error_stack =1;
+	  last_error_message = strdup(data->header);
+	  CLE_log_append(strdup(data->header));
+	  CLE_log_append(strdup(tmp));
+	}
+	else if((tmp=strstr(line, "at 0x")))
+	{
+	  if(error_stack)
+	  {
+	    printf("Dans la pile d'erreur");
+	    if(strstr(tmp, data->source_name))
+	    {
+	      printf(" dans le fichier source de l'élève");
+	    }
+	      
+	    printf("\n");
+	  }
+	  CLE_log_append(strdup(data->header));
+	  CLE_log_append(strdup(tmp));
+	}
+	else if((tmp=strstr(line, "by 0x")))
+	{
+	  if(error_stack)
+	  {
+	    printf("Dans la pile d'erreur\n");
+	  }
+	  if(strstr(tmp, data->source_name))
+	  {
+	    printf(" dans le fichier source de l'élève");
+	  }
+	  CLE_log_append(strdup(data->header));
+	  CLE_log_append(strdup(tmp));
+	}
+	else if((tmp=strstr(line, "Address 0x")))
+	{
+	  error_stack =0;
+	  CLE_log_append(strdup(data->header));
+	  CLE_log_append(strdup(tmp));
+	}
+	else
+	  printf("ligne de valgrind reçu et non traité : %s", data->line);
+	return 0;
+      }
+    regfree(&preg);
+    return 1;
+  }
+
+
+
+
+
+
+
+
+
+
+
 void exercise_append_gcc_log(exercise_t e,char* log, int size)
 {    
   int l=0;
