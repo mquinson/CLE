@@ -20,6 +20,14 @@ typedef struct {
   char* msg;
 } log_error_s, *log_error;
 
+typedef struct {
+  char* line;
+  char* header;
+  char* source_name;
+  int source_limit;
+} valgrind_log_s;
+
+
 struct s_exercise {
 	const char *mission;
 	/* This is the template which are print for the student*/
@@ -55,7 +63,12 @@ void exercice_add_log(exercise_t e, int line, char* msg);
 void exercise_clear_log(exercise_t e);
 
 void display_compilation_errors(exercise_t e);
+int display_valgrind_errors(valgrind_log_s *data);
 void exercise_append_gcc_log(exercise_t e,char* log, int size);
+
+void exercise_print_unauthorized(exercise_t e, int fd);
+void print_line_prepocessor_instruction(int fd, int line, char* filename);
+char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, const char* source);
 
 
 

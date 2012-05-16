@@ -2,6 +2,7 @@
  * entity_userside.c: functions callable from user code
  */
 #include <stdio.h>
+#include <stdlib.h>
 
 // BEGINKILL
 #include <stdarg.h>

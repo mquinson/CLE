@@ -8,6 +8,7 @@
 
 #define ERROR_LOG 0
 #define WARNING_LOG 1
+#define INFO_LOG 2
 
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksourcemark.h>
@@ -24,6 +25,8 @@ void CLE_exercise_has_changed();
 
 /* Retrieve the source code entered by the student into the source editor */
 char *CLE_get_sourcecode(void);
+
+int CLE_get_sourcecode_size(void);
 
 /* Add text to the console area (the text is free()d after use, think about strdup()ing it) */
 void CLE_log_append(char*text);
@@ -63,15 +66,16 @@ struct CLE_data
     
     int speed;
     int isrunning;
-	int step_by_step;
-	int stop;
-	int run;
+    int step_by_step;
+    int stop;
+    int run;
+    int debug;
 };
 
 typedef struct {
   int nbMarks;
   GtkSourceMark** marks;
-} listMarks_s, *listMarks;
+}listMarks;
 
 void world_ask_repaint(core_world_t w);
 

@@ -43,8 +43,8 @@
   <object class="GtkWindow" id="main_window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">C Learning Environment</property>
-    <property name="default_width">600</property>
-    <property name="default_height">400</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
     <signal name="destroy" handler="gtk_main_quit" swapped="no"/>
     <child>
       <object class="GtkVBox" id="vbox1">
@@ -289,6 +289,22 @@
 	      </packing>
 	    </child>
 	    <child>
+	      <object class="GtkButton" id="buttonDebug">
+		<property name="label" translatable="yes">Debug</property>
+		<property name="use_action_appearance">False</property>
+		<property name="visible">True</property>
+		<property name="can_focus">True</property>
+		<property name="receives_default">True</property>
+		<property name="use_action_appearance">False</property>
+		<signal name="clicked" handler="cb_debug_clicked" swapped="no"/>
+	      </object>
+	      <packing>
+		<property name="expand">False</property>
+		<property name="fill">False</property>
+		<property name="position">1</property>
+	      </packing>
+	    </child>
+	    <child>
 	      <object class="GtkButton" id="buttonStop">
 		<property name="label" translatable="yes">Stop</property>
 		<property name="use_action_appearance">False</property>
@@ -301,7 +317,7 @@
 	      <packing>
 		<property name="expand">False</property>
 		<property name="fill">False</property>
-		<property name="position">1</property>
+		<property name="position">2</property>
 	      </packing>
 	    </child>
 	    <child>
@@ -317,7 +333,7 @@
 	      <packing>
 		<property name="expand">False</property>
 		<property name="fill">False</property>
-		<property name="position">2</property>
+		<property name="position">3</property>
 	      </packing>
 	    </child>
 	    <child>
@@ -331,7 +347,7 @@
             <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">3</property>
+                <property name="position">4</property>
             </packing>
         </child>
 		<child>
@@ -348,7 +364,7 @@
             <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-				<property name="position">4</property>
+				<property name="position">5</property>
 			</packing>
 		</child>
 	  </object>
@@ -517,6 +533,8 @@
 	  <object class="GtkScrolledWindow" id="scrolledwindow3">
 	    <property name="visible">True</property>
 	    <property name="can_focus">True</property>
+	    <property name="width-request">600</property>
+	    <property name="height-request">150</property>
 	    <child>
 	      <object class="GtkTextView" id="log_view">
 		<property name="visible">True</property>

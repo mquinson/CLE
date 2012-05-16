@@ -49,6 +49,6 @@ void* entity_run(void* t);
 void entity_set_rank(entity_t t, int rank);
 /* get the entity ranking in its world (to be called from exercise mechanism) */
 int entity_get_rank(entity_t t);
-
+char* entity_get_description(entity_t t);
 
 #endif /* TURTLE_H_ */
