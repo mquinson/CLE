@@ -56,6 +56,11 @@ int main(int argc, char **argv) {
     global_data = g_slice_new( CLE_data_t );
     global_data->lesson = NULL;
     global_data->current_world_expose =0;
+    global_data->speed =100;
+    global_data->stop =0;
+    global_data->run =0;
+    global_data->isrunning =0;
+    global_data->step_by_step = 0;
     
     global_data->world_selection_model = gtk_tree_store_new(1, G_TYPE_STRING);
 
@@ -100,7 +105,7 @@ int main(int argc, char **argv) {
     gtk_widget_add_accelerator(item,"activate",gag,'D',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
     item = CH_GET_OBJECT(global_data->builder,menu_stop,GTK_WIDGET);
     gtk_widget_add_accelerator(item,"activate",gag,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
-    item = CH_GET_OBJECT(global_data->builder,menu_undo,GTK_WIDGET);
+    item = CH_GET_OBJECT(global_data->builder,menu_step_by_step,GTK_WIDGET);
     gtk_widget_add_accelerator(item,"activate",gag,'P',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
     item = CH_GET_OBJECT(global_data->builder,menu_undo,GTK_WIDGET);
     gtk_widget_add_accelerator(item,"activate",gag,'Z',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
@@ -143,8 +148,7 @@ int main(int argc, char **argv) {
     
     list_marks = malloc(sizeof(listMarks));
     list_marks->marks = malloc(sizeof(GtkSourceMark*)*MAX_NB_LOG_ERRORS);
-    list_marks->nbMarks = 0;
-    
+    list_marks->nbMarks = 0; 
     
 
     /* load the exercise (must be done before we show the widget) */
@@ -500,7 +504,7 @@ void CLE_clear_mark() {
 
 void CLE_add_mark(int line, int type) {
   GtkSourceMark *mark=NULL;
-
+	printf("Erreur renvoyer\n");
   char string_line[100];
   sprintf(string_line, "%i",line);
   

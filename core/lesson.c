@@ -76,6 +76,7 @@ void lesson_set_exo(lesson_t l, int num) {
 	}
 	if (l->e_curr)
 		(*(l->e_curr->exercise_free))(l->e_curr);
+	global_data->speed = 100;
 	l->e_curr = l->exos[num].exo_constructor();
 	CLE_exercise_has_changed();
 }

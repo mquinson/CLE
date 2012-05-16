@@ -95,6 +95,7 @@ void display_compilation_errors(exercise_t e) {
       char* line = strndup(first_char_pt,length);
       int match = regexec (&preg, line, 0, NULL, 0);
       if (match==0) {
+		  printf("Nouvelle erreur ou warning trouve\n");
 	// Display this line
 	char *string_numline = strchr(line,':');
 	char *end = strchr(string_numline+1, ':');
@@ -105,11 +106,11 @@ void display_compilation_errors(exercise_t e) {
 	char *second_2p = strchr(end+1, ':');
 	if(!second_2p)
 	  second_2p = end+1;
-	
+	printf("%s\n", second_2p);
 	exercice_add_log(e,numline,strdup(second_2p+2));
-	if(!strncmp(second_2p+2, "error", strlen("error")))
+	if(!strncmp(second_2p+2, "error", strlen("error")) || !strncmp(second_2p+2, "erreur", strlen("erreur")))
 	  CLE_add_mark(numline, ERROR_LOG);
-	else if(!strncmp(second_2p+2, "warning", strlen("warning")))
+	else if(!strncmp(second_2p+2, "warning", strlen("warning")) || !strncmp(second_2p+2, "attention", strlen("attention")))
 	  CLE_add_mark(numline, WARNING_LOG);
 	
       }

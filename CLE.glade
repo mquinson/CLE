@@ -321,21 +321,21 @@
 	      </packing>
 	    </child>
 	    <child>
-              <object class="GtkButton" id="buttonStepbystep">
+           <object class="GtkButton" id="buttonStepbystep">
                 <property name="label" translatable="yes">Step by step</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <signal name="clicked" handler="cb_step_by_step_clicked"/>
-              </object>
-              <packing>
+            </object>
+            <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
                 <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkHScale" id="hscale">
+            </packing>
+        </child>
+		<child>
+            <object class="GtkHScale" id="hscale">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="update_policy">discontinuous</property>
@@ -344,13 +344,13 @@
                 <property name="upper_stepper_sensitivity">on</property>
                 <property name="fill_level">1000</property>
                 <property name="digits">0</property>
-              </object>
-              <packing>
+            </object>
+            <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
+				<property name="position">4</property>
+			</packing>
+		</child>
 	  </object>
 	  <packing>
 	    <property name="expand">False</property>

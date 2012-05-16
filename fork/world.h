@@ -25,6 +25,8 @@ void world_decrease_amount_entity(core_world_t w);
 void world_set_step_delay(core_world_t w, int step_delay);
 double world_get_sizeX(core_world_t w);
 double world_get_sizeY(core_world_t w);
+void world_set_sizeX(core_world_t w, double x);
+void world_set_sizeY(core_world_t w, double y);
 
 
 /* state modifications from the turtle (protected functions) */

@@ -14,12 +14,6 @@
 #include "core/lesson.h"
 
 
-int isrunning;
-int step_by_step;
-int stop;
-int run;
-int s; //the speed of execution of the exercise
-
 typedef struct CLE_data CLE_data_t;
 CLE_data_t *global_data;
 
@@ -68,6 +62,12 @@ struct CLE_data
     /* the current lesson */
     lesson_t lesson;
     int current_world_expose;
+    
+    int speed;
+    int isrunning;
+	int step_by_step;
+	int stop;
+	int run;
 };
 
 typedef struct {

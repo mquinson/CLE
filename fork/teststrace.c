@@ -196,8 +196,8 @@ void writing_command(int fds,char* name_prog){
 			write(fd1,line,strlen(line));
 			write(fds,line,strlen(line));
 			free_action(action);
-			if(run)
-				usleep((MAX_SPEED-s)*10000);
+			if(global_data->run)
+				usleep((MAX_SPEED-global_data->speed)*10000);
 		}
 		
     	printf("Fin niveau 1\n");
@@ -224,7 +224,7 @@ int readline (int fd, char *line, int maxlen){
 			if (n==1) 
 				retvalue = 0;
 			else 
-				retvalue = n;
+				retvalue = n;	
 		}
 	}
 	*tmpptr = '\0'; 
@@ -258,7 +258,7 @@ void read_info(int fdl,int fdw){
 	clear_listing(listing,50);
 	clear_listing(bool_listing,50);
 	do{
-		printf("Boucle attente niveau 2\nrun : %d\tgot : %d\tstep_by_step : %d\n",run,got,step_by_step);
+		printf("Boucle attente niveau 2\nrun : %d\tgot : %d\tstep_by_step : %d\n",global_data->run,got,global_data->step_by_step);
 		if ((got = readline(fdl, buf, 500)) < 0){
       		got=1;
         }
@@ -293,10 +293,11 @@ void read_info(int fdl,int fdw){
 			write(fd,line,strlen(line));
 			free_action(action);
 		}
-		if(run)
-			usleep((MAX_SPEED-s)*10000);
+		if(global_data->run)
+			usleep((MAX_SPEED-global_data->speed)*10000);
 	}
 	while(got>0);
+	wait(NULL);
 	printf("Fin lecture niveau 2\n");
 	free(bool_listing);
 	free(buf);

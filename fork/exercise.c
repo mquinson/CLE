@@ -19,6 +19,7 @@
 
 #define MAX_ENTITY 100
 
+
 /* Prototypes of the exercises composing this lesson */
 exercise_t fork_1fork_create(void);
 
@@ -44,10 +45,10 @@ void* exercise_demo_runner(void *exo) {
   	printf("Launch of demo\n");
 	entity_t t;
 	
-	stop=0;
-	run=1;
-	step_by_step=0;
-	isrunning=1;
+	global_data->stop=0;
+	global_data->run=1;
+	global_data->step_by_step=0;
+	global_data->isrunning=1;
 	end_goal = 0;
 	exercise_t e = exo;
 	demo_runner_running = (GMutex *)e->demo_runner_running;
@@ -142,11 +143,8 @@ void* exercise_demo_runner(void *exo) {
 	free_param_runner(pr);
 	world_set_step_delay(e->w_goal[0],0);
 	g_mutex_unlock(demo_runner_running);
-	run = 0;
-	isrunning = 0;
 	end_goal=1;
 	printf("goal end!!\n");
-	
 	return NULL;
 }
 
@@ -325,13 +323,13 @@ void *entity_fork_run(void *param){
 	action *action;
 	/*creat("res/CLE2.txt",0666);
 	int fd1= open("res/CLE2.txt",O_WRONLY);*/
-	printf("Appel dessin : run : %d\tstop : %d\t step_by_step : %d\n",run,stop,step_by_step);
+	printf("Appel dessin : run : %d\tstop : %d\t step_by_step : %d\n",global_data->run,global_data->stop,global_data->step_by_step);
 	
 	/*Reading line by line the file descriptor who recieves the commands to draw the line
 	 * One line is only one command of a processus*/
 	do{
-		printf("Niveau 3 : run : %d\tstop : %d\t step_by_step : %d\n",run,stop,step_by_step);
-		while(!run && !stop && !step_by_step){
+		printf("Niveau 3 : run : %d\tstop : %d\t step_by_step : %d\n",global_data->run,global_data->stop,global_data->step_by_step);
+		while(!global_data->run && !global_data->stop && !global_data->step_by_step){
 			printf("Boucle attente niveau 3\n");
 			usleep(100000);
 		}
@@ -344,7 +342,7 @@ void *entity_fork_run(void *param){
 			
         /*Reading ...*/
 		else if(got>0){
-			step_by_step = 0;
+			global_data->step_by_step = 0;
 			printf("Message recu niveau 3\n");
 			buf[got]='\0';
 					
@@ -470,9 +468,21 @@ void *entity_fork_run(void *param){
 				}
 				free_action(action);
 			}
+			int pmax;
+			if(pr->nb_t < 2){
+				pmax = (int) entity_get_x(pr->list_t[0]);
+			}
+			else{
+				pmax = (int) entity_get_x(pr->list_t[1]);
+			}
+			if(pmax >= (int)world_get_sizeX((core_world_t)pr->w) - 15){
+				world_set_sizeX((core_world_t)pr->w, world_get_sizeX((core_world_t)pr->w)+30);
+				world_set_sizeY((core_world_t)pr->w, world_get_sizeY((core_world_t)pr->w));
+				world_ask_repaint((core_world_t)pr->w);	
+			}
 		}
-		if(run)
-			usleep((MAX_SPEED-s)*10000);
+		if(global_data->run)
+			usleep((MAX_SPEED-global_data->speed)*10000);
 	}
 	while(got>0);
 	printf("Fin d'execution de l'exercice\n");
@@ -490,7 +500,6 @@ param_execute_proc *allocate_execute_proc(char *binary,int fd){
 
  
 void* exercise_run_runner(void *exo) {
-	
 	exercise_t e = exo;
 	while(!end_goal);
 	printf("goal end : %d\n",end_goal);
@@ -510,7 +519,7 @@ void* exercise_run_runner(void *exo) {
 	/*Test strace*/
 	int fd[2];
 	pipe(fd);
-	param_execute_proc *pep = allocate_execute_proc(e->s_filename,fd[1]);
+	param_execute_proc *pep = allocate_execute_proc(e->binary,fd[1]);
 	GThread *te = g_thread_create(execute_proc,(void*)pep,1,NULL);
 	if (pids)
 		free(pids);
@@ -519,6 +528,7 @@ void* exercise_run_runner(void *exo) {
 	printf("Launch all turtles\n");
 	/* Launch all the runners */
 	param_runner *pr = allocate_param_runner(t,fd[0],(world_t)e->w_curr[0]);
+	printf("run 3 : run : %d step_by_step : %d\n",global_data->run,global_data->step_by_step);
 	entity_fork_run((void*)pr);
 	
 	g_thread_join(te);
@@ -539,13 +549,13 @@ void* exercise_run_runner(void *exo) {
 	else
 		CLE_dialog_failure("Your world differs from the goal");
 	g_mutex_unlock(run_runner_running);
-	isrunning=0;
-	run = 0;
-	step_by_step=0;
 	free(pids);
 	pids=NULL;
 	unlink(binary);
 	free(binary);
+	
+	global_data->isrunning = 0;
+	global_data->run = 0;
 	
 	return NULL;
 }
@@ -567,7 +577,6 @@ void exercise_run(exercise_t ex, char *source) {
 	
 	run_runner_running = (GMutex *)e->run_runner_running;
 	int res = g_mutex_trylock(run_runner_running);
-	
 	if (!res) {
 		printf("Not restarting the execution (it's already running)\n");
 		return;
@@ -588,7 +597,21 @@ void exercise_run(exercise_t ex, char *source) {
 	int todo = strlen(p);
 	while (todo>0)
 		todo -= write(fd,p,todo);
-
+	
+	int i;
+	for(i=0 ; i<e->unauthorizedNumber ; ++i)
+	{
+	  write(fd, "#define ", strlen("#define "));
+	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
+	  write(fd, " You_cannot_use_", strlen(" You_cannot_use_"));
+	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
+	  write(fd, "\n", 1);
+	}
+	
+	write(fd,"\n#line 1 \"", strlen("\n#line 1 \""));
+	write(fd,filename, strlen(filename));
+	write(fd,"\"\n", strlen("\"\n"));
+	
 	p = source;
 	todo = strlen(source);
 	while (todo>0)
@@ -617,18 +640,21 @@ void exercise_run(exercise_t ex, char *source) {
 		char buff[1024];
 		int got;
 		while ((got = read(gcc[0],&buff,1023))>0) {
-			buff[got] = '\0';
-			printf("gcc error : %s", buff);
-			CLE_log_append(strdup(buff));
+			exercise_append_gcc_log(e, buff, got);
+			buff[0] = '\0';
 		}
 		waitpid(pid,&status,0);
+		close(gcc[0]);
+		if (e->gcc_report_new)
+		  CLE_log_append(strdup(e->gcc_report));
+		display_compilation_errors(e);
 	}
 	exercise_set_binary(e, binary);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 		/* Launch the exercise (in a separate thread waiting for the completion of all turtles before re-enabling the button) */
-		g_thread_create(exercise_run_runner,e,0,NULL);
+		g_thread_create(exercise_run_runner,e,1,NULL);
 	} else  {
-		g_mutex_unlock(run_runner_running);
+		g_mutex_unlock(e->run_runner_running);
 
 		if (WIFEXITED(status)) {
 			CLE_log_append(strdup("Compilation error. Abording code execution\n"));
@@ -695,6 +721,13 @@ exercise_t exercise_new(const char *mission, const char *template,
 	result->w_init = NULL;
 	result->w_curr = NULL;
 	result->w_goal = NULL;
+	
+	result->gcc_report_new=0;
+	result->gcc_report = NULL;
+	
+	result->nb_logs = 0;
+	result->gcc_logs = malloc(sizeof(log_error)*MAX_NB_LOG_ERRORS);
+	
 	result->worldAmount = 0;
 	result->exercise_free = exercise_free;
 	result->unauthorizedNumber = 0;
