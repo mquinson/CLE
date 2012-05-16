@@ -28,6 +28,7 @@ G_MODULE_EXPORT void cb_can_undo_changed(GtkButton *button);
 G_MODULE_EXPORT void cb_menu_change_lesson(GtkMenuItem *menuitem, gpointer data);
 G_MODULE_EXPORT void cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data);
 G_MODULE_EXPORT void world_selection_change(GtkComboBox *arg0, gpointer   user_data);
+//G_MODULE_EXPORT void cb_debug_clicked(GtkButton *button)
 
 static gchar * mark_tooltip_func (GtkSourceMark *mark, gpointer user_data) {
   GtkTextBuffer *buf;
@@ -61,6 +62,7 @@ int main(int argc, char **argv) {
     global_data->run =0;
     global_data->isrunning =0;
     global_data->step_by_step = 0;
+    global_data->debug=0;
     
     global_data->world_selection_model = gtk_tree_store_new(1, G_TYPE_STRING);
 
@@ -140,6 +142,10 @@ int main(int argc, char **argv) {
 	gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), "warning", 2);
 	gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), "warning", mark_tooltip_func, NULL, NULL);
 	
+	gtk_source_view_set_mark_category_icon_from_stock (GTK_SOURCE_VIEW(global_data->source_view), "info", GTK_STOCK_DIALOG_INFO);
+	gtk_source_view_set_mark_category_priority (GTK_SOURCE_VIEW(global_data->source_view), "info", 3);
+	gtk_source_view_set_mark_category_tooltip_markup_func (GTK_SOURCE_VIEW(global_data->source_view), "info", mark_tooltip_func, NULL, NULL);
+	
     /* Connect signals */
     gtk_builder_connect_signals( global_data->builder, global_data );
     
@@ -170,6 +176,7 @@ int main(int argc, char **argv) {
 void CLE_set_lesson(lesson_t l) {
 	if (l==NULL) /* error while loading? */
 		return;
+	global_data->debug=0;
 	/* Change the data model */
 	if(global_data->lesson)
 		lesson_free(global_data->lesson);
@@ -198,6 +205,7 @@ void CLE_exercise_has_changed() {
 	GtkSourceBuffer *sb;
 
 	CLE_log_clear();
+	global_data->debug=0;
 
 	gtk_text_buffer_set_text(
 			gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->mission_view)),
@@ -248,6 +256,7 @@ int CLE_get_sourcecode_size(void){
   {
     if(*text == '\n')
       ++size;
+    ++text;
   }
   
   return size;
@@ -504,14 +513,15 @@ void CLE_clear_mark() {
 
 void CLE_add_mark(int line, int type) {
   GtkSourceMark *mark=NULL;
-	printf("Erreur renvoyer\n");
-  char string_line[100];
+  char string_line[15];
   sprintf(string_line, "%i",line);
   
   if(type == ERROR_LOG)
     mark= gtk_source_mark_new(NULL,"error");
   else if(type == WARNING_LOG)
     mark= gtk_source_mark_new(NULL,"warning");
+  else if(type == INFO_LOG)
+    mark= gtk_source_mark_new(NULL,"info");
   else
     return;
   

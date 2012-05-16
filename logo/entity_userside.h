@@ -8,6 +8,7 @@ static char *userside =
     " * entity_userside.c: functions callable from user code\n"
     " */\n"
     "#include <stdio.h>\n"
+    "#include <stdlib.h>\n"
     "\n"
     "// BEGINKILL\n"
     "#include <stdarg.h>\n"

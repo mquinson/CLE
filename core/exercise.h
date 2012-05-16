@@ -66,6 +66,10 @@ void display_compilation_errors(exercise_t e);
 int display_valgrind_errors(valgrind_log_s *data);
 void exercise_append_gcc_log(exercise_t e,char* log, int size);
 
+void exercise_print_unauthorized(exercise_t e, int fd);
+void print_line_prepocessor_instruction(int fd, int line, char* filename);
+char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, const char* source);
+
 
 
 #endif /* EXERCICE_H_ */

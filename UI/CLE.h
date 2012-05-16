@@ -8,6 +8,7 @@
 
 #define ERROR_LOG 0
 #define WARNING_LOG 1
+#define INFO_LOG 2
 
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksourcemark.h>
@@ -65,9 +66,10 @@ struct CLE_data
     
     int speed;
     int isrunning;
-	int step_by_step;
-	int stop;
-	int run;
+    int step_by_step;
+    int stop;
+    int run;
+    int debug;
 };
 
 typedef struct {

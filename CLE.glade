@@ -289,6 +289,22 @@
 	      </packing>
 	    </child>
 	    <child>
+	      <object class="GtkButton" id="buttonDebug">
+		<property name="label" translatable="yes">Debug</property>
+		<property name="use_action_appearance">False</property>
+		<property name="visible">True</property>
+		<property name="can_focus">True</property>
+		<property name="receives_default">True</property>
+		<property name="use_action_appearance">False</property>
+		<signal name="clicked" handler="cb_debug_clicked" swapped="no"/>
+	      </object>
+	      <packing>
+		<property name="expand">False</property>
+		<property name="fill">False</property>
+		<property name="position">1</property>
+	      </packing>
+	    </child>
+	    <child>
 	      <object class="GtkButton" id="buttonStop">
 		<property name="label" translatable="yes">Stop</property>
 		<property name="use_action_appearance">False</property>
@@ -301,7 +317,7 @@
 	      <packing>
 		<property name="expand">False</property>
 		<property name="fill">False</property>
-		<property name="position">1</property>
+		<property name="position">2</property>
 	      </packing>
 	    </child>
 	    <child>
@@ -317,7 +333,7 @@
 	      <packing>
 		<property name="expand">False</property>
 		<property name="fill">False</property>
-		<property name="position">2</property>
+		<property name="position">3</property>
 	      </packing>
 	    </child>
 	    <child>
@@ -331,7 +347,7 @@
             <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">3</property>
+                <property name="position">4</property>
             </packing>
         </child>
 		<child>
@@ -348,7 +364,7 @@
             <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-				<property name="position">4</property>
+				<property name="position">5</property>
 			</packing>
 		</child>
 	  </object>

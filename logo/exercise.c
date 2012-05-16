@@ -32,35 +32,11 @@ void* exercise_demo_runner(void* exo) {
 	exercise_t e = exo;
 	if(e->s_filename==NULL)
 	{
-	  char *filename= strdup("/tmp/CLEs.XXXXXX");
+	  char *filename= generate_temporary_sourcefile_header(e, userside, e->prof_solution);
+	  
 	  char* binary_t = strdup("/tmp/CLEb.XXXXXX");
 	  int ignored =mkstemp(binary_t); // avoid the useless warning on mktemp dangerousness
 	  close(ignored);
-	  int fd = mkstemp(filename);
-
-	  /* Copy stringified version of userside to file */
-	  char *p = userside;
-	  /*"#include <stdio.h>\n"
-			  "double get_x(void);\n"
-			  "double get_y(void);\n"
-			  "double get_heading(void);\n"
-			  "void forward(double steps);\n"
-			  "void backward(double steps);\n"
-			  "void left(double angle);\n"
-			  "void right(double angle);\n"
-			  "void pen_up(void);\n"
-			  "void pen_down(void);\n"
-			  "#line 1 \"yourcode\"\n";*/
-	  int todo = strlen(p);
-	  while (todo>0)
-		  todo -= write(fd,p,todo);
-
-	  p = strdup(e->prof_solution);
-	  todo = strlen(e->prof_solution);
-	  while (todo>0)
-		  todo -= write(fd,p,todo);
-
-	  close(fd);
 
 	  /* Fork a process to compile it */
 	  int status;
@@ -212,6 +188,11 @@ struct log_listener_data{
 void *exercise_run_log_listener(void *d) {
     struct log_listener_data *data  = d;
     valgrind_log_s *vl = data->valgrind_log;
+    
+    
+    //CLE_log_clear();
+    exercise_clear_log(global_data->lesson->e_curr);
+    CLE_clear_mark();
     char buff[1024];
     char* tmp = buff;
     int got;
@@ -274,7 +255,10 @@ void exercise_run_one_entity(entity_t t) {
 		char exec_name[50];
 		sprintf(exec_name, ".%s", entity_get_binary(t));
 		
-		execl("/usr/bin/valgrind","/usr/bin/valgrind", entity_get_binary(t),NULL);
+		if(global_data->debug)
+		  execl("/usr/bin/valgrind","/usr/bin/valgrind", entity_get_binary(t),NULL);
+		else
+		  execl(entity_get_binary(t),"child",NULL);
 		perror("OUCH execl failed!\n");
 		exit(2);
 	}// Father: listen what the child has to tell
@@ -293,7 +277,7 @@ void exercise_run_one_entity(entity_t t) {
 	data->valgrind_log = malloc(sizeof(valgrind_log_s));
 	data->valgrind_log->header = entity_get_description(t);
 	data->valgrind_log->source_name = strdup("CLEs.");
-	data->valgrind_log->source_limit = CLE_get_codesource_size();
+	data->valgrind_log->source_limit = CLE_get_sourcecode_size();
 	GThread * log_listener = g_thread_create(exercise_run_log_listener,data,1,NULL);
 	
 	
@@ -444,49 +428,11 @@ void exercise_run(exercise_t e, char *source) {
 	CLE_log_clear();
 
 	/* create 2 filenames */
-	char *filename= strdup("/tmp/CLEs.XXXXXX");
+	char *filename= generate_temporary_sourcefile_header(e, userside, source);
+	
 	char *binary = strdup("/tmp/CLEb.XXXXXX");
 	int ignored =mkstemp(binary); // avoid the useless warning on mktemp dangerousness
 	close(ignored);
-	int fd = mkstemp(filename);
-
-	/* Copy stringified version of userside to file */
-	char *p = userside;
-	/*"#include <stdio.h>\n"
-			"double get_x(void);\n"
-			"double get_y(void);\n"
-			"double get_heading(void);\n"
-			"void forward(double steps);\n"
-			"void backward(double steps);\n"
-			"void left(double angle);\n"
-			"void right(double angle);\n"
-			"void pen_up(void);\n"
-			"void pen_down(void);\n"
-			"#line 1 \"yourcode\"\n";*/
-	int todo = strlen(p);
-	while (todo>0)
-		todo -= write(fd,p,todo);
-
-	int i;
-	for(i=0 ; i<e->unauthorizedNumber ; ++i)
-	{
-	  write(fd, "#define ", strlen("#define "));
-	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
-	  write(fd, " You_cannot_use_", strlen(" You_cannot_use_"));
-	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
-	  write(fd, "\n", 1);
-	}
-	
-	write(fd,"\n#line 1 \"", strlen("\n#line 1 \""));
-	write(fd,filename, strlen(filename));
-	write(fd,"\"\n", strlen("\"\n"));
-	
-	p = source;
-	todo = strlen(source);
-	while (todo>0)
-		todo -= write(fd,p,todo);
-
-	close(fd);
 
 	/* Fork a process to compile it */
 	int gcc[2];
