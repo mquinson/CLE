@@ -9,6 +9,7 @@ static char *userside =
     " */\n"
     "#include <stdio.h>\n"
     "#include <unistd.h>\n"
+    "#include <stdlib.h>\n"
     "// BEGINKILL\n"
     "#include <stdarg.h>\n"
     "\n"

@@ -11,7 +11,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define TRACE_FORK "trace=process"
+#define TRACE_FORK "trace=process,write,read"
+#define MAX_LINE 1000
 
 /**
 Structure linked to an action of a processus
@@ -26,6 +27,8 @@ typedef struct{
 	char *call;			/**name of the command called by the processus
 						(clone for a fork, wait4 for a wait, ...)
 						* these names are determined in observing the lines returned by the execution of strace */
+	int fd;			    /**number of the file descriptor which reffers to the message*/
+	char *message;      /**name of a message sent or read by the processus*/
 }action;
 
 /**

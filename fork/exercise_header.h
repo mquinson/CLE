@@ -9,5 +9,6 @@
  
 exercise_t fork_1fork_create(void);
 exercise_t fork_what_the_fork_create(void);
+exercise_t fork_exo1_create(void);
 
 #endif

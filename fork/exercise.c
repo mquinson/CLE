@@ -425,6 +425,15 @@ void *entity_fork_run(void *param){
 					}
 					free(color);
 				}
+				
+				/*A processus made a read() or a write()*/
+				if(!strncmp(action->call,"read",strlen("read")) || !strncmp(action->call,"write",strlen("write"))){
+					char *line = malloc(MAX_LINE*sizeof(char));
+					sprintf(line,"Processus %d %s in the file descriptor %d : %s\n",action->pid_father,action->call,action->fd,action->message);
+					printf("%s",line);
+					CLE_log_append(strdup(line));
+					free(line);
+				}
 							
 				/*A processus made an exit()*/
 				if(!strcmp(action->call,"exit_group") && action->end){
