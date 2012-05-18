@@ -156,6 +156,12 @@ int entity_get_rank(entity_t t) {
 	return t->rank;
 }
 
+
+core_world_t entity_get_world(entity_t t)
+{
+  return (core_world_t)t->world;
+}
+
 char* entity_get_description(entity_t t)
 {
     char res[100];

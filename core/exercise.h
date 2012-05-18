@@ -22,8 +22,8 @@ typedef struct {
 
 typedef struct {
   char* line;
-  char* header;
   char* source_name;
+  int world_numero;
   int source_limit;
 } valgrind_log_s;
 

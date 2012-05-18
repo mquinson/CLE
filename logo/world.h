@@ -29,6 +29,10 @@ int world_entity_get_pid(core_world_t w, int num);
 void world_entity_add(core_world_t w, entity_t t);
 void world_line_add(core_world_t w, double x1, double y1, double x2, double y2);
 
+
+void world_set_rank(core_world_t w, int rank);
+int world_get_rank(core_world_t w);
+
 //void world_redraw(void* w, void *cr,int sizeX,int sizeY);
 
 entity_t world_entity_geti(core_world_t w,int i); /* helper for the foreach, don't use directly */

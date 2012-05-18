@@ -12,7 +12,7 @@
 #include "core/lesson.h"
 #include "UI/CLE.h"
 
-#define SOUCRE_FILEPREFIX "CLEs."
+#define SOURCEFILE_PREFIX "CLEs."
 
 
 void exercise_set_binary(exercise_t e, char* binary){
@@ -131,11 +131,12 @@ void display_compilation_errors(exercise_t e) {
   }
 }
 
+static char last_error_message[1024];
+static int error_stack = 0;
+static int adress_stack=0;
+static int error_count=0;
 
 int display_valgrind_errors(valgrind_log_s *data) {
-  static char* last_error_message = NULL;
-  static int error_stack = 0;
-  static int adress_stack=0;
   
     regex_t preg;
     if ( regcomp (&preg, "^==[0-9]*==", REG_NOSUB | REG_EXTENDED)) {
@@ -148,20 +149,25 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	char* tmp;
 	if((tmp=strstr(line, "Invalid")))
 	{
-	  if(last_error_message)
-	    free(last_error_message);
 	  error_stack =1;
 	  adress_stack=0;
-	  last_error_message = strdup(tmp);
-	  CLE_log_append(strdup(data->header));
-	  CLE_log_append(strdup(" "));
-	  CLE_log_append(strdup(tmp));
+	  ++error_count;
+	  
+	  sprintf(last_error_message, "error %d : %s", error_count, tmp);
+	  /*We copy all string without final '\n' */
+	  last_error_message[strlen(last_error_message)-1]='\0';
+	  CLE_add_log_for_world(" ", data->world_numero);
+	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else if((tmp=strstr(line, "at 0x")))
 	{
 	  if(error_stack)
 	  {
-	    char* number=strstr(tmp, data->source_name);
+	    char* number;
+	    if(data->source_name!=NULL)
+	      number=strstr(tmp, data->source_name);
+	    else
+	      number=strstr(tmp, SOURCEFILE_PREFIX);
 	    if(number)
 	    {
 	      number=strchr(number, ':');
@@ -178,15 +184,18 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      
 	    printf("\n");
 	  }
-	  CLE_log_append(strdup(data->header));
-	  CLE_log_append(strdup("\t\t"));
-	  CLE_log_append(strdup(tmp));
+	  CLE_add_log_for_world("\t\t", data->world_numero);
+	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else if((tmp=strstr(line, "by 0x")))
 	{
 	  if(adress_stack)
 	  {
-	    char* number=strstr(tmp, data->source_name);
+	    char* number;
+	    if(data->source_name!=NULL)
+	      number=strstr(tmp, data->source_name);
+	    else
+	      number=strstr(tmp, SOURCEFILE_PREFIX);
 	    if(number)
 	    {
 	      number=strchr(number, ':');
@@ -203,17 +212,15 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	    adress_stack=0;
 	    printf("\n");
 	  }
-	  CLE_log_append(strdup(data->header));
-	  CLE_log_append(strdup("\t\t"));
-	  CLE_log_append(strdup(tmp));
+	  CLE_add_log_for_world("\t\t", data->world_numero);
+	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else if((tmp=strstr(line, "Address 0x")))
 	{
 	  error_stack =0;
 	  adress_stack=1;
-	  CLE_log_append(strdup(data->header));
-	  CLE_log_append(strdup(" "));
-	  CLE_log_append(strdup(tmp));
+	  CLE_add_log_for_world(" ", data->world_numero);
+	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else
 	  printf("ligne de valgrind reçu et non traité : %s", data->line);
@@ -289,7 +296,7 @@ int get_amount_line(const char* text)
 char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, const char* source)
 {
   int todo;
-  char *filename= strdup("/tmp/" SOUCRE_FILEPREFIX "XXXXXX");
+  char *filename= strdup("/tmp/" SOURCEFILE_PREFIX "XXXXXX");
   int fd = mkstemp(filename);
   
   print_line_prepocessor_instruction(fd, get_amount_line(source)+2, filename);

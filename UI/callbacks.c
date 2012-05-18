@@ -16,6 +16,7 @@
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
+	CLE_clear_worlds_log();
 	char *source = CLE_get_sourcecode();
 	global_data->isrunning = 1;
 	global_data->run = 1;
@@ -28,19 +29,15 @@ cb_run_clicked(GtkButton *button) {
 	/* Switch the notebook to the first page (which is #0), where the student code runs */
 	gtk_notebook_set_current_page(global_data->world_views,0);
 
-	// BEGINKILL
 	printf("Execution\n");
 	(*(global_data->lesson->e_curr->w_curr[0]->exercise_run))(global_data->lesson->e_curr,source);
-	// REPLACE
-	///* Display what should be complied. You should replace this with your own code */
-	//CLE_log_append(strdup("Run clicked. We should compile that code:\n"));
-	//CLE_log_append(strdup(source));
-	// ENDKILL
+
 	free(source);
 }
 
 G_MODULE_EXPORT void
 cb_debug_clicked(GtkButton *button) {
+  CLE_clear_worlds_log();
   char *source = CLE_get_sourcecode();
   global_data->isrunning = 1;
   global_data->run = 1;
@@ -73,6 +70,7 @@ cb_stop_clicked(GtkButton *button) {
 
 G_MODULE_EXPORT void
 cb_demo_clicked(GtkButton *button) {
+	CLE_clear_worlds_log();
 	global_data->debug=0;
 	/* Switch the notebook to the second page (which is #1), where the demo is */
 	gtk_notebook_set_current_page(global_data->world_views,1);
@@ -91,6 +89,7 @@ cb_step_by_step_clicked(GtkButton *button) {
 	global_data->run = 0;
 	
 	if(!global_data->isrunning){
+	  CLE_clear_worlds_log();
 		char *source = CLE_get_sourcecode();
 
 		// BEGINKILL
@@ -108,6 +107,9 @@ world_selection_change(GtkComboBox *arg0, gpointer   user_data){
   global_data->current_world_expose = gtk_combo_box_get_active(arg0);
   world_ask_repaint(global_data->lesson->e_curr->w_curr[global_data->current_world_expose]);
   world_ask_repaint(global_data->lesson->e_curr->w_goal[global_data->current_world_expose]);
+  CLE_log_clear();
+  if(global_data->worlds_log[global_data->current_world_expose])
+    CLE_log_append(strdup(global_data->worlds_log[global_data->current_world_expose]));
 }
 
 /* The about dialog window */

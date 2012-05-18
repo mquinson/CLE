@@ -37,6 +37,7 @@ core_world_t world_new(double sizeX, double sizeY) {
 	res->mother.sizeX = sizeX;
 	res->mother.sizeY = sizeY;
 	res->mother.step_delay = 0;
+	res->mother.rank = -1;
 	res->mother.world_repaint = world_redraw;
 	res->mother.exercise_run = exercise_run;
 	res->mother.exercise_stop = exercise_stop;
@@ -66,7 +67,8 @@ core_world_t world_copy(core_world_t world) {
 	res->mother.world_repaint = world->world_repaint;
 	res->mother.exercise_run = world->exercise_run;
 	res->mother.exercise_stop = world->exercise_stop;
-
+	res->mother.rank = world->rank;
+	
 	res->amount_entity = w->amount_entity;
 	res->entities = malloc(sizeof(entity_t)*w->amount_entity);
 	for (it=0;it<res->amount_entity;it++) {
@@ -206,5 +208,15 @@ int world_entity_get_pid(core_world_t world, int num)
 {
   world_t w = (world_t) world;
   return entity_get_pid(w->entities[num]);
+}
+
+void world_set_rank(core_world_t w, int rank)
+{
+  w->rank = rank;
+}
+
+int world_get_rank(core_world_t w)
+{
+  return w->rank;
 }
 

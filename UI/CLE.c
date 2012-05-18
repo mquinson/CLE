@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
     global_data->isrunning =0;
     global_data->step_by_step = 0;
     global_data->debug=0;
+    global_data->worlds_log = NULL;
     
     global_data->world_selection_model = gtk_tree_store_new(1, G_TYPE_STRING);
 
@@ -544,4 +545,32 @@ void CLE_add_mark(int line, int type) {
   list_marks->nbMarks++;
   
   //printf("Erreur en ligne %d\n",line);
+}
+
+void CLE_add_log_for_world(char* text, int world_numero)
+{
+  printf("%d %p %p\n", world_numero, global_data->worlds_log, global_data->worlds_log[world_numero]);
+  if(!(global_data->worlds_log[world_numero]=realloc(global_data->worlds_log[world_numero], strlen(global_data->worlds_log[world_numero])+strlen(text)+2)))
+  {
+    perror("unable to realloc memory for worlds_log\n");
+    exit(1);
+  }
+  strcat(global_data->worlds_log[world_numero], text);
+  if(global_data->current_world_expose == world_numero)
+  {
+    CLE_log_clear();
+    CLE_log_append(strdup(global_data->worlds_log[world_numero]));
+  }
+}
+
+void CLE_clear_worlds_log()
+{
+  int i;
+  for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
+  {
+    if(global_data->worlds_log[i])
+      free(global_data->worlds_log[i]);
+    global_data->worlds_log[i]=malloc(sizeof(char)*1);
+    global_data->worlds_log[i][0]='\0';
+  }
 }

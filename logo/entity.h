@@ -6,6 +6,7 @@
 #define TURTLE_H_
 
 #include <sys/types.h>
+#include "core/world.h"
 
 typedef struct s_entity *entity_t;
 typedef struct s_world *world_t;
@@ -42,6 +43,8 @@ void entity_set_pid(entity_t t, pid_t pid);
 /* Stop the processus which execute entity comportement*/
 void entity_stop_execution(entity_t t, pid_t pid);
 
+
+core_world_t entity_get_world(entity_t t);
 
 void* entity_run(void* t);
 

@@ -74,9 +74,29 @@ void lesson_set_exo(lesson_t l, int num) {
 		printf("No exercise number %d in lesson %s\n",num,l->title);
 		return;
 	}
+	int i;
 	if (l->e_curr)
+	{
+
+		for(i=0; i<l->e_curr->worldAmount; ++i)
+		{
+		  if(global_data->worlds_log[i])
+		    free(global_data->worlds_log[i]);
+		}
+		free(global_data->worlds_log);
+		
 		(*(l->e_curr->exercise_free))(l->e_curr);
+	}
 	global_data->speed = 100;
 	l->e_curr = l->exos[num].exo_constructor();
+	
+	/*We allocate memory needed for the different log*/
+	global_data->worlds_log=malloc(sizeof(char*)*l->e_curr->worldAmount);
+	for(i=0; i<l->e_curr->worldAmount; ++i)
+	{
+	  global_data->worlds_log[i]=malloc(sizeof(char)*1);
+	  global_data->worlds_log[i][0]='\0';
+	}
+	
 	CLE_exercise_has_changed();
 }

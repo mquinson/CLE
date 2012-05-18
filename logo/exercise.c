@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <regex.h>
 
+
 #include "UI/CLE.h"
 #include "core/exercise.h"
 #include "core/lesson.h"
@@ -203,7 +204,7 @@ void *exercise_run_log_listener(void *d) {
 	*tmp='\0';
 	vl->line = buff;
 	if(display_valgrind_errors(vl))
-	  CLE_log_append(strdup(buff));
+	  CLE_add_log_for_world(buff, vl->world_numero);
 	
 	tmp=buff;
       }
@@ -256,7 +257,12 @@ void exercise_run_one_entity(entity_t t) {
 		sprintf(exec_name, ".%s", entity_get_binary(t));
 		
 		if(global_data->debug)
-		  execl("/usr/bin/valgrind","/usr/bin/valgrind", entity_get_binary(t),NULL);
+		{
+		  if(!access("/usr/bin/valgrind", F_OK))
+		    execl("/usr/bin/valgrind","/usr/bin/valgrind", entity_get_binary(t),NULL);
+		  else
+		    fprintf(stderr, "Cannot run on debug mode : valgrind can't be found on computer\n");
+		}
 		else
 		  execl(entity_get_binary(t),"child",NULL);
 		perror("OUCH execl failed!\n");
@@ -275,8 +281,9 @@ void exercise_run_one_entity(entity_t t) {
 	struct log_listener_data* data = malloc(sizeof(struct log_listener_data));
 	data->pipe = c2f[0];
 	data->valgrind_log = malloc(sizeof(valgrind_log_s));
-	data->valgrind_log->header = entity_get_description(t);
-	data->valgrind_log->source_name = strdup("CLEs.");
+	data->valgrind_log->world_numero = world_get_rank(entity_get_world(t));
+	/*A null source_name means that we use global prefix for filename */
+	data->valgrind_log->source_name = NULL;
 	data->valgrind_log->source_limit = CLE_get_sourcecode_size();
 	GThread * log_listener = g_thread_create(exercise_run_log_listener,data,1,NULL);
 	
@@ -512,6 +519,7 @@ exercise_t exercise_new(const char *mission, const char *template, const char *p
 
 void exercise_add_world(exercise_t e, core_world_t world)
 {
+  world_set_rank(world, e->worldAmount);
    ++(e->worldAmount);
    int i;
    core_world_t* temp = malloc(sizeof(core_world_t*)*e->worldAmount);

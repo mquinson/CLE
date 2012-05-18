@@ -28,6 +28,9 @@ char *CLE_get_sourcecode(void);
 
 int CLE_get_sourcecode_size(void);
 
+void CLE_clear_worlds_log();
+/*Add text to the log of a specific world*/
+void CLE_add_log_for_world(char* text, int world_numero);
 /* Add text to the console area (the text is free()d after use, think about strdup()ing it) */
 void CLE_log_append(char*text);
 /* Clear the console area */
@@ -60,6 +63,8 @@ struct CLE_data
 
     GtkNotebook *world_views;
 
+    /*Logs of different world*/
+    char** worlds_log;
     /* the current lesson */
     lesson_t lesson;
     int current_world_expose;
