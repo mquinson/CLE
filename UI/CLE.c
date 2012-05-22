@@ -14,6 +14,8 @@
 #include "UI/CLE.h"
 #include "core/lesson.h"
 #include "core/exercise.h"
+#include "core/log.h"
+#include "core/mark.h"
 
 #include <string.h> /* strlen */
 #include <stdlib.h> /* free */
@@ -28,16 +30,7 @@ G_MODULE_EXPORT void cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer dat
 G_MODULE_EXPORT void world_selection_change(GtkComboBox *arg0, gpointer   user_data);
 //G_MODULE_EXPORT void cb_debug_clicked(GtkButton *button)
 
-static gchar * mark_tooltip_func (GtkSourceMark *mark, gpointer user_data) {
-//   GtkTextBuffer *buf;
-//   GtkTextIter iter;
-//   gint line;
-//   
-//   buf = gtk_text_mark_get_buffer (GTK_TEXT_MARK (mark));
-//   
-//   gtk_text_buffer_get_iter_at_mark (buf, &iter, GTK_TEXT_MARK (mark));
-//   line = gtk_text_iter_get_line (&iter) + 1;
-  
+static gchar * mark_tooltip_func (GtkSourceMark *mark, gpointer user_data) { 
   return get_message_for_mark(mark);
 }
 
@@ -294,44 +287,6 @@ void CLE_dialog_failure(char *reason) {
 	g_idle_add(dialog_from_main,reason);
 }
 
-
-static gboolean log_append_from_main(gpointer data) {
-    GtkTextIter end;
-    GtkTextBuffer *buff = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->log_view));
-
-    gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(buff), &end);
-	gtk_text_buffer_insert(buff,&end,(char*)data,-1);
-
-//    gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(buff), &end);
-    gtk_text_buffer_place_cursor (buff, &end);
-	gtk_widget_queue_draw(global_data->log_view);
-	free(data);
-
-	return FALSE; // We want to be executed only once.
-}
-static gboolean log_clear_from_main(gpointer data) {
-    GtkTextIter start;
-    GtkTextBuffer *buff = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->log_view));
-
-    gtk_text_buffer_set_text(buff,"",-1);
-
-    /* move cursor to the beginning */
-    gtk_text_buffer_get_start_iter (buff, &start);
-    gtk_text_buffer_place_cursor (buff, &start);
-	gtk_widget_queue_draw(global_data->log_view);
-
-	return FALSE;
-}
-
-void CLE_log_append(char*text) {
-	// do not use directly the UI from external threads. Queue work for the main dude instead.
-	g_idle_add(log_append_from_main,(void*)text);
-}
-void CLE_log_clear() {
-	// do not use directly the UI from external threads. Queue work for the main dude instead.
-	g_idle_add(log_clear_from_main,NULL);
-}
-
 /* Forces a repaint of the widget presenting the world (either the current or the goal)
  * Actually, we simply invalidate the region, and it will get repainted the next time that
  *   the gtk_main_loop gets idle. So it should be called from an external thread.
@@ -491,174 +446,6 @@ G_MODULE_EXPORT void
 cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data) {
 	int num=*(int*)data;
 	lesson_set_exo(global_data->lesson,num);
-}
-
-
-void CLE_clear_mark(int num_world) {
-  if(global_data->worlds_mark==NULL || num_world != global_data->current_world_expose)
-      return;
-  GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
-  
-  int i;
-  for (i=0;i<global_data->worlds_mark[num_world]->nb_mark ;i++) {
-    if(!gtk_text_mark_get_deleted(GTK_TEXT_MARK(global_data->worlds_mark[num_world]->marks[i]->mark)))
-      gtk_text_buffer_delete_mark(buffer,GTK_TEXT_MARK(global_data->worlds_mark[num_world]->marks[i]->mark));
-  }
-}
-
-void CLE_add_mark_to_all(char* message, int line, int type)
-{
-  int i;
-  for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
-  {
-    CLE_add_mark_to_world(message,line, type, i);
-  }
-}
-
-
-
-void CLE_add_mark_to_world(char* message, int line, int type, int num_world) {
-  GtkSourceMark *mark=NULL;
-  char string_line[15];
-  sprintf(string_line, "%i",line);
- 
-  
-  if(type == ERROR_LOG)
-    mark= gtk_source_mark_new(NULL,"error");
-  else if(type == WARNING_LOG)
-    mark= gtk_source_mark_new(NULL,"warning");
-  else if(type == INFO_LOG)
-    mark= gtk_source_mark_new(NULL,"info");
-  else
-    return;
-  if(global_data->current_world_expose == num_world)
-    CLE_clear_mark(num_world);
-  // Save mark pt
-  if (global_data->worlds_mark[num_world]->nb_mark%MAX_NB_LOG_ERRORS==0 ) {
-    global_data->worlds_mark[num_world]->marks = realloc(global_data->worlds_mark[num_world]->marks,sizeof(mark_data)*(global_data->worlds_mark[num_world]->nb_mark + MAX_NB_LOG_ERRORS));
-    if (global_data->worlds_mark[num_world]->marks==NULL) {
-      perror("Realloc failed in CLE_add_mark\n");
-      exit(1);
-    }
-  }
-  //printf("%d %p %p %p\n",list_marks->nb_mark,list_marks, list_marks->marks, list_marks->marks[list_marks->nb_mark]);
-  global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark] = malloc(sizeof(mark_data));
-  global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark]->mark = mark;
-  global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark]->line = line;
-  global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark]->message = strdup(message);
-  ++(global_data->worlds_mark[num_world]->nb_mark);
-  
-  if(global_data->current_world_expose == num_world)
-    CLE_show_mark();
-  
-  //printf("Erreur en ligne %d\n",line);
-}
-
-void CLE_add_log_for_world(char* text, int world_numero)
-{
-  if(!(global_data->worlds_log[world_numero]=realloc(global_data->worlds_log[world_numero], strlen(global_data->worlds_log[world_numero])+strlen(text)+2)))
-  {
-    perror("unable to realloc memory for worlds_log\n");
-    exit(1);
-  }
-  strcat(global_data->worlds_log[world_numero], text);
-  if(global_data->current_world_expose == world_numero)
-  {
-    CLE_log_clear();
-    CLE_log_append(strdup(global_data->worlds_log[world_numero]));
-  }
-}
-
-void CLE_add_log_to_all(char* text)
-{
-  int i;
-  for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
-  {
-    CLE_add_log_for_world(strdup(text), i);
-  }
-}
-
-void CLE_clear_logs_of_world(int num_world)
-{
-//   printf("CLE_clear_logs_of_world call\n");
-  if(global_data->worlds_log[num_world])
-    free(global_data->worlds_log[num_world]);
-  global_data->worlds_log[num_world]=malloc(sizeof(char)*1);
-  global_data->worlds_log[num_world][0]='\0';
-}
-
-void CLE_clear_worlds_log()
-{
-//   printf("CLE_clear_worlds_log call\n");
-  CLE_log_clear();
-  int i;
-  for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
-  {
-    CLE_clear_logs_of_world(i);
-  }
-}
-
-void CLE_clear_worlds_mark()
-{
-//   printf("CLE_clear_worlds_mark call\n");
-  
-  int i,j=0;
-  for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
-  {
-    CLE_clear_mark(i);
-    if(global_data->worlds_mark[i]->marks==NULL)
-      continue;
-//     printf("Suppress of all mark for world \n");
-    for(j=0; j<global_data->worlds_mark[i]->nb_mark; ++j)
-    {
-//       printf("Begin suppress of message\n");
-      if(global_data->worlds_mark[i]->marks[j]->message)
-      {
-	free(global_data->worlds_mark[i]->marks[j]->message);
-      }
-//       printf("Suppression of message\n");
-      free(global_data->worlds_mark[i]->marks[j]);
-    }
-//     printf("%p \n", global_data->worlds_mark[i]->marks);
-    global_data->worlds_mark[i]->marks=NULL;
-    global_data->worlds_mark[i]->nb_mark=0;
-  }
-//   printf("CLE_clear_worlds_mark call...... end\n");
-}
-
-char* get_message_for_mark(GtkSourceMark *mark)
-{
-  GtkTextBuffer *buf;
-  GtkTextIter iter;
-  gint line;
-  
-  buf = gtk_text_mark_get_buffer (GTK_TEXT_MARK (mark));
-  
-  gtk_text_buffer_get_iter_at_mark (buf, &iter, GTK_TEXT_MARK (mark));
-  line = gtk_text_iter_get_line (&iter) + 1;
-  
-  int i=0;
-  
-  for(i=0; i<global_data->worlds_mark[global_data->current_world_expose]->nb_mark;++i)
-  {
-    if(global_data->worlds_mark[global_data->current_world_expose]->marks[i]->line == line)
-      return strdup(global_data->worlds_mark[global_data->current_world_expose]->marks[i]->message);
-  }
-  return NULL;
-}
-
-void CLE_show_mark()
-{
-  int i;
-  for(i=0; i<global_data->worlds_mark[global_data->current_world_expose]->nb_mark;++i)
-  {
-    GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
-    
-    GtkTextIter iter;
-    gtk_text_buffer_get_iter_at_line (buffer, &iter, global_data->worlds_mark[global_data->current_world_expose]->marks[i]->line-1);
-    
-    gtk_text_buffer_add_mark(buffer,GTK_TEXT_MARK(global_data->worlds_mark[global_data->current_world_expose]->marks[i]->mark),&iter);
-  }
 }
 
 int CLE_is_debug_mode()

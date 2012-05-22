@@ -11,6 +11,7 @@
 #include "core/exercise.h"
 #include "core/lesson.h"
 #include "UI/CLE.h"
+#include "core/mark.h"
 
 #define SOURCEFILE_PREFIX "CLEs."
 #define STUDENT_FILENAME "student.c"
@@ -248,7 +249,7 @@ void *exercise_run_log_listener(void *d) {
   if(global_data->debug)
   {
     CLE_clear_logs_of_world(vl->world_numero);
-    CLE_clear_worlds_mark();
+    CLE_free_mark_of_world(vl->world_numero);
   }
   char buff[1024];
   char* tmp = buff;

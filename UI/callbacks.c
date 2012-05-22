@@ -13,6 +13,8 @@
 #include "core/exercise.h"
 #include "core/lesson.h"
 #include "core/world.h"
+#include "core/log.h"
+#include "core/mark.h"
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
@@ -38,6 +40,7 @@ cb_run_clicked(GtkButton *button) {
 
 G_MODULE_EXPORT void
 cb_debug_clicked(GtkButton *button) {
+//   printf("\n\n");
   CLE_clear_worlds_mark();
   CLE_clear_worlds_log();
   char *source = CLE_get_sourcecode();

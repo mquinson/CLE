@@ -234,7 +234,7 @@ void exercise_run_one_entity(entity_t t) {
 		char exec_name[50];
 		sprintf(exec_name, ".%s", entity_get_binary(t));
 		
-		if(global_data->debug)
+		if(CLE_is_debug_mode())
 		{
 		  if(!access("/usr/bin/valgrind", F_OK))
 		    execl("/usr/bin/valgrind","/usr/bin/valgrind", entity_get_binary(t),NULL);

@@ -15,7 +15,7 @@ FORK_CORE_SOURCE = fork/teststrace.c fork/world.c fork/entity.c fork/exercise.c
 
 all: CLE $(PLUGINS) parser
 
-CORE=CLE.o callbacks.o exercise.o lesson.o
+CORE=CLE.o callbacks.o exercise.o lesson.o log.o mark.o
 
 LOGO_HEADERS=logo/entity.h logo/world.h logo/logo.h logo/exercise.h logo/exercise_header.h \
 		logo/entity_userside.h logo/world_view.h 
@@ -27,15 +27,22 @@ PARSER= parser.o generate.o baliseProcess.o parserUtils.o structUtility.o
 CLE: $(CORE)
 	gcc $^ -o CLE $(LDFLAGS)
 	
-CLE.o: UI/CLE.c UI/CLE.h	
+CLE.o: UI/CLE.c UI/CLE.h core/exercise.h core/lesson.h core/log.h core/mark.h
 	$(CC) $(CFLAGS) -c $< -o $@
-callbacks.o: UI/callbacks.c UI/CLE.h
+callbacks.o: UI/callbacks.c UI/CLE.h core/exercise.h core/lesson.h core/log.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-exercise.o: core/exercise.c core/exercise.h
+exercise.o: core/exercise.c core/exercise.h UI/CLE.h core/mark.h
 	$(CC) $(CFLAGS) -c $< -o $@
-lesson.o: core/lesson.c core/lesson.h core/exercise.h
+
+lesson.o: core/lesson.c core/lesson.h core/exercise.h UI/CLE.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+log.o: core/log.c core/log.h UI/CLE.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+mark.o: core/mark.c core/mark.h UI/CLE.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
