@@ -13,6 +13,7 @@
 #include "UI/CLE.h"
 
 #define SOURCEFILE_PREFIX "CLEs."
+#define STUDENT_FILENAME "student.c"
 
 
 void exercise_set_binary(exercise_t e, char* binary){
@@ -80,55 +81,38 @@ void exercise_clear_log(exercise_t e){
   e->nb_logs=0;
 }
 
-void display_compilation_errors(exercise_t e) {
+void display_compilation_errors(char* message) {
   
-  CLE_clear_mark();
-  exercise_clear_log(e);
-  
-  if (e->gcc_report != NULL && e->gcc_report_new) {
-    char *first_char_pt=e->gcc_report, 
-    *last_char_pt = strchr(e->gcc_report,'\n');
-    
-    regex_t preg;
-    if ( regcomp (&preg, "^/tmp/CLEs.[0-9A-Za-z]{6}:[0-9]+:", REG_NOSUB | REG_EXTENDED)) {
-      perror("Erreur de compilation d'expression régulière\n");
-      exit(1);
-    }
-    
-    while(last_char_pt!=NULL) {
-      int length = last_char_pt-first_char_pt;
-      char* line = strndup(first_char_pt,length);
-      int match = regexec (&preg, line, 0, NULL, 0);
-      if (match==0) {
-		  printf("Nouvelle erreur ou warning trouve\n");
-	// Display this line
-	char *string_numline = strchr(line,':');
-	char *end = strchr(string_numline+1, ':');
-	*end ='\0';
-	int numline = atoi(string_numline+1);
-	*end = ':';
-	
-	char *second_2p = strchr(end+1, ':');
-	if(!second_2p)
-	  second_2p = end+1;
-	printf("%s\n", second_2p);
-	exercice_add_log(e,numline,strdup(second_2p+2));
-	if(!strncmp(second_2p+2, "error", strlen("error")) || !strncmp(second_2p+2, "erreur", strlen("erreur")))
-	  CLE_add_mark(numline, ERROR_LOG);
-	else if(!strncmp(second_2p+2, "warning", strlen("warning")) || !strncmp(second_2p+2, "attention", strlen("attention")))
-	  CLE_add_mark(numline, WARNING_LOG);
-	
-      }
-      free(line);
-      first_char_pt = last_char_pt +1;
-      last_char_pt = strchr(first_char_pt,'\n');
-    }
-    regfree(&preg);
-    
-    e->gcc_report_new=0;
-    free(e->gcc_report);
-    e->gcc_report=NULL;
+  regex_t preg;
+  if ( regcomp (&preg, "^"STUDENT_FILENAME":[0-9]+:", REG_NOSUB | REG_EXTENDED)) {
+    perror("Erreur de compilation d'expression régulière\n");
+    exit(1);
   }
+  
+  char* line = strdup(message);
+  /* Replace ultimate \n by \0 */
+  *(strchr(line, '\n'))='\0';
+
+  int match = regexec (&preg, line, 0, NULL, 0);
+  if (match==0) {
+    // Display this line
+    char *string_numline = strchr(line,':');
+    char *end = strchr(string_numline+1, ':');
+    *end ='\0';
+    int numline = atoi(string_numline+1);
+    *end = ':';
+    
+    char *second_2p = strchr(end+1, ':');
+    if(!second_2p)
+      second_2p = end+1;
+
+    if(!strncmp(second_2p+2, "error", strlen("error")) || !strncmp(second_2p+2, "erreur", strlen("erreur")))
+      CLE_add_mark_to_all(strdup(second_2p+2),numline, ERROR_LOG);
+    else if(!strncmp(second_2p+2, "warning", strlen("warning")) || !strncmp(second_2p+2, "attention", strlen("attention")))
+      CLE_add_mark_to_all(strdup(second_2p+2),numline, WARNING_LOG);
+  }
+  CLE_add_log_to_all(strdup(message));
+  regfree(&preg);
 }
 
 static char last_error_message[1024];
@@ -167,7 +151,7 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	    if(data->source_name!=NULL)
 	      number=strstr(tmp, data->source_name);
 	    else
-	      number=strstr(tmp, SOURCEFILE_PREFIX);
+	      number=strstr(tmp, STUDENT_FILENAME);
 	    if(number)
 	    {
 	      number=strchr(number, ':');
@@ -178,7 +162,7 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      if(numero_line < data->source_limit+1)
 	      {
 		exercice_add_log(global_data->lesson->e_curr,numero_line,strdup(last_error_message));
-		CLE_add_mark(numero_line, ERROR_LOG);
+		CLE_add_mark_to_world(strdup(last_error_message),numero_line, ERROR_LOG, 0);
 	      }
 	    }
 	      
@@ -195,7 +179,7 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	    if(data->source_name!=NULL)
 	      number=strstr(tmp, data->source_name);
 	    else
-	      number=strstr(tmp, SOURCEFILE_PREFIX);
+	      number=strstr(tmp, STUDENT_FILENAME);
 	    if(number)
 	    {
 	      number=strchr(number, ':');
@@ -206,7 +190,7 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      if(numero_line < data->source_limit+1)
 	      {
 		exercice_add_log(global_data->lesson->e_curr,numero_line,strdup("Allocation of data"));
-		CLE_add_mark(numero_line, INFO_LOG);
+		CLE_add_mark_to_world(strdup(last_error_message),numero_line, INFO_LOG,0);
 	      }
 	    }
 	    adress_stack=0;
@@ -318,7 +302,7 @@ char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, c
   
   exercise_print_unauthorized(e, fd);
   
-  print_line_prepocessor_instruction(fd, 1, filename);
+  print_line_prepocessor_instruction(fd, 1, STUDENT_FILENAME);
   
   todo = strlen(source);
   while (todo>0)
@@ -328,3 +312,40 @@ char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, c
   
   return filename;
 }
+
+
+/* Small thread in charge of listening everything that the user's entity printf()s,
+ * and add it to the log console */
+void *exercise_run_log_listener(void *d) {
+  struct log_listener_data *data  = d;
+  valgrind_log_s *vl = data->valgrind_log;
+  
+  
+  if(global_data->debug)
+  {
+    CLE_clear_worlds_log();
+    CLE_clear_worlds_mark();
+  }
+  char buff[1024];
+  char* tmp = buff;
+  int got;
+  while ((got = read(data->pipe,tmp,1))>0) {
+    if(*tmp=='\n')
+    {
+      ++tmp;
+      *tmp='\0';
+    vl->line = buff;
+    if(display_valgrind_errors(vl))
+      CLE_add_log_for_world(buff, vl->world_numero);
+    
+    tmp=buff;
+    }
+    else
+      ++tmp;
+  }
+  free(data->valgrind_log);
+  free(data);
+  return NULL;
+}
+
+

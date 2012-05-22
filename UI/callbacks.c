@@ -16,6 +16,7 @@
 
 G_MODULE_EXPORT void
 cb_run_clicked(GtkButton *button) {
+	CLE_clear_worlds_mark();
 	CLE_clear_worlds_log();
 	char *source = CLE_get_sourcecode();
 	global_data->isrunning = 1;
@@ -37,6 +38,7 @@ cb_run_clicked(GtkButton *button) {
 
 G_MODULE_EXPORT void
 cb_debug_clicked(GtkButton *button) {
+  CLE_clear_worlds_mark();
   CLE_clear_worlds_log();
   char *source = CLE_get_sourcecode();
   global_data->isrunning = 1;
@@ -70,6 +72,7 @@ cb_stop_clicked(GtkButton *button) {
 
 G_MODULE_EXPORT void
 cb_demo_clicked(GtkButton *button) {
+	CLE_clear_worlds_mark();
 	CLE_clear_worlds_log();
 	global_data->debug=0;
 	/* Switch the notebook to the second page (which is #1), where the demo is */
@@ -103,13 +106,15 @@ G_MODULE_EXPORT void
 world_selection_change(GtkComboBox *arg0, gpointer   user_data){
   if(gtk_combo_box_get_active(arg0) ==-1)
     return;
+  CLE_log_clear();
+  CLE_clear_mark();
   
   global_data->current_world_expose = gtk_combo_box_get_active(arg0);
   world_ask_repaint(global_data->lesson->e_curr->w_curr[global_data->current_world_expose]);
   world_ask_repaint(global_data->lesson->e_curr->w_goal[global_data->current_world_expose]);
-  CLE_log_clear();
   if(global_data->worlds_log[global_data->current_world_expose])
     CLE_log_append(strdup(global_data->worlds_log[global_data->current_world_expose]));
+  CLE_show_mark();
 }
 
 /* The about dialog window */

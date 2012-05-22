@@ -90,13 +90,18 @@ void lesson_set_exo(lesson_t l, int num) {
 	global_data->speed = 100;
 	l->e_curr = l->exos[num].exo_constructor();
 	
-	/*We allocate memory needed for the different log*/
+	/*We allocate memory needed for the different log and  marks*/
 	global_data->worlds_log=malloc(sizeof(char*)*l->e_curr->worldAmount);
+	global_data->worlds_mark=malloc(sizeof(listMarks*)*l->e_curr->worldAmount);
 	for(i=0; i<l->e_curr->worldAmount; ++i)
 	{
 	  global_data->worlds_log[i]=malloc(sizeof(char)*1);
 	  global_data->worlds_log[i][0]='\0';
+	  
+	  global_data->worlds_mark[i] = malloc(sizeof(mark_data*)*MAX_NB_LOG_ERRORS);
+	  global_data->worlds_mark[i]->nb_mark = 0;
+	  global_data->worlds_mark[i]->marks = NULL; 
 	}
-	
+	printf("Fin de l'eajout de l'éxo\n");
 	CLE_exercise_has_changed();
 }

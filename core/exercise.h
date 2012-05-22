@@ -28,6 +28,13 @@ typedef struct {
 } valgrind_log_s;
 
 
+
+struct log_listener_data{
+  int pipe;
+  valgrind_log_s* valgrind_log;
+};
+
+
 struct s_exercise {
 	const char *mission;
 	/* This is the template which are print for the student*/
@@ -44,7 +51,7 @@ struct s_exercise {
 	core_world_t *w_init, *w_curr, *w_goal;
 	int worldAmount;
 	
-	int gcc_report_new; //
+	int gcc_report_new;
 	log_error* gcc_logs;
 	int nb_logs;
 	char* gcc_report;
@@ -62,13 +69,15 @@ char* exercice_get_log(exercise_t e, int line);
 void exercice_add_log(exercise_t e, int line, char* msg);
 void exercise_clear_log(exercise_t e);
 
-void display_compilation_errors(exercise_t e);
+void display_compilation_errors(char* message);
 int display_valgrind_errors(valgrind_log_s *data);
 void exercise_append_gcc_log(exercise_t e,char* log, int size);
 
 void exercise_print_unauthorized(exercise_t e, int fd);
 void print_line_prepocessor_instruction(int fd, int line, char* filename);
 char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, const char* source);
+
+void *exercise_run_log_listener(void *d);
 
 
 

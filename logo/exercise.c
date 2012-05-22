@@ -27,6 +27,7 @@ void exercise_run_one_entity(entity_t t);
  * It is in charge of starting a thread for each entity to animate, and wait for their completion
  */
 void* exercise_demo_runner(void* exo) {
+    
 	int it;
 	entity_t t;
 	
@@ -46,8 +47,8 @@ void* exercise_demo_runner(void* exo) {
 	  int pid = fork();
 	  switch (pid) {
 	  case -1:
-		  CLE_log_append(strdup("Error while forking the compiler"));
-		  CLE_log_append(strdup(strerror(errno)));
+		  CLE_add_log_to_all(strdup("Error while forking the compiler"));
+		  CLE_add_log_to_all(strdup(strerror(errno)));
 		  break;
 	  case 0: // Child: run gcc
 		  close(gcc[0]);
@@ -59,12 +60,21 @@ void* exercise_demo_runner(void* exo) {
 	  default: // Father: listen what gcc has to tell
 		  close(gcc[1]);
 		  char buff[1024];
+		  char* tmp=buff;
 		  int got;
-		  while ((got = read(gcc[0],&buff,1023))>0) {
-			  buff[got] = '\0';
-			  CLE_log_append(strdup(buff));
+		  while ((got = read(gcc[0],tmp,1))>0) {
+		    if(*tmp=='\n')
+		    {
+		      ++tmp;
+		      *tmp='\0';
+		      display_compilation_errors(strdup(tmp));
+		      tmp=buff;
+		    }
+		    else
+		      ++tmp;
 		  }
 		  waitpid(pid,&status,0);
+		  close(gcc[0]);
 	  }
 	  e->s_filename = binary_t;
 	  unlink(filename);
@@ -120,6 +130,9 @@ void* exercise_demo_runner(void* exo) {
 }
 
 void exercise_demo(exercise_t e) {
+//   printf("Starting demo\n");
+//   int *p=NULL;
+//   printf("%d", *p);
 	int res = g_mutex_trylock(e->demo_runner_running);
 	if (!res) {
 		printf("Not restarting the demo (it's already running)\n");
@@ -180,41 +193,6 @@ int exercise_demo_is_running(void* exo) {
 }
 
 
-struct log_listener_data{
-  int pipe;
-  valgrind_log_s* valgrind_log;
-};
-/* Small thread in charge of listening everything that the user's entity printf()s,
- * and add it to the log console */
-void *exercise_run_log_listener(void *d) {
-    struct log_listener_data *data  = d;
-    valgrind_log_s *vl = data->valgrind_log;
-    
-    
-    //CLE_log_clear();
-    exercise_clear_log(global_data->lesson->e_curr);
-    CLE_clear_mark();
-    char buff[1024];
-    char* tmp = buff;
-    int got;
-    while ((got = read(data->pipe,tmp,1))>0) {
-      if(*tmp=='\n')
-      {
-	++tmp;
-	*tmp='\0';
-	vl->line = buff;
-	if(display_valgrind_errors(vl))
-	  CLE_add_log_for_world(buff, vl->world_numero);
-	
-	tmp=buff;
-      }
-      else
-	++tmp;
-    }
-    free(data->valgrind_log);
-    free(data);
-    return NULL;
-}
 
 
 /* Function in charge of running a particular entity */
@@ -231,8 +209,8 @@ void exercise_run_one_entity(entity_t t) {
 	int pid = fork();
 	int status;
 	if (pid < 0) {
-		CLE_log_append(strdup("Error while forking the entity runner"));
-		CLE_log_append(strdup(strerror(errno)));
+	  CLE_add_log_for_world(strdup("Error while forking the entity runner"), world_get_rank(entity_get_world(t)));
+	  CLE_add_log_for_world(strdup(strerror(errno)), world_get_rank(entity_get_world(t)));
 		return;
 	}
 	if (pid == 0) { // Child: run the entity
@@ -330,8 +308,8 @@ void exercise_run_one_entity(entity_t t) {
 			entity_pen_down(t);
 			break;
 		default:
-			CLE_log_append(strdup("Oops, unknown order from child: "));
-			CLE_log_append(strdup(buff));
+		  CLE_add_log_for_world(strdup("Oops, unknown order from child: "), world_get_rank(entity_get_world(t)));
+		  CLE_add_log_for_world(strdup(buff), world_get_rank(entity_get_world(t)));
 		}
 	}
 	/* the child is done. Cleaning */
@@ -340,14 +318,14 @@ void exercise_run_one_entity(entity_t t) {
 	waitpid(entity_get_pid(t),&status,0);
 	if (WIFSIGNALED(status)) {
 		if (WTERMSIG(status)==SIGTERM) {
-			CLE_log_append(strdup("(execution aborded on user request)\n"));
+		  CLE_add_log_for_world(strdup("(execution aborded on user request)\n"), world_get_rank(entity_get_world(t)));
 		} else if (WTERMSIG(status)==SIGSEGV) {
-			CLE_log_append(strdup("The your code in a SIGSEGV. Check your pointers.\n"));
+		  CLE_add_log_for_world(strdup("The your code in a SIGSEGV. Check your pointers.\n"), world_get_rank(entity_get_world(t)));
 		} else {
-			CLE_log_append(strdup("The child running the entity got signaled!\n"));
+		  CLE_add_log_for_world(strdup("The child running the entity got signaled!\n"), world_get_rank(entity_get_world(t)));
 		}
 	} else if (WIFEXITED(status) && WEXITSTATUS(status) !=0) {
-		CLE_log_append(strdup("The child running the entity returned with abnormal return value!\n"));
+	  CLE_add_log_for_world(strdup("The child running the entity returned with abnormal return value!\n"), world_get_rank(entity_get_world(t)));
 	}
 	g_thread_join(log_listener);
 	//printf("Done running entity %p\n",t);
@@ -460,16 +438,21 @@ void exercise_run(exercise_t e, char *source) {
 	default: // Father: listen what gcc has to tell
 		close(gcc[1]);
 		char buff[1024];
+		char* tmp=buff;
 		int got;
-		while ((got = read(gcc[0],&buff,1023))>0) {
-		  exercise_append_gcc_log(e, buff, got);
-		  buff[0] = '\0';
+		while ((got = read(gcc[0],tmp,1))>0) {
+		  if(*tmp=='\n')
+		  {
+		    ++tmp;
+		    *tmp='\0';
+		  display_compilation_errors(strdup(buff));
+		  tmp=buff;
+		  }
+		  else
+		    ++tmp;
 		}
 		waitpid(pid,&status,0);
 		close(gcc[0]);
-		if (e->gcc_report_new)
-		  CLE_log_append(strdup(e->gcc_report));
-		display_compilation_errors(e);
 	}
 	exercise_set_binary(e, binary);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
@@ -479,9 +462,9 @@ void exercise_run(exercise_t e, char *source) {
 		g_mutex_unlock(e->run_runner_running);
 
 		if (WIFEXITED(status)) {
-			CLE_log_append(strdup("Compilation error. Abording code execution\n"));
+			CLE_add_log_to_all(strdup("Compilation error. Abording code execution\n"));
 		} else if (WIFSIGNALED(status)) {
-			CLE_log_append(strdup("The compiler got a signal. Weird.\n"));
+			CLE_add_log_to_all(strdup("The compiler got a signal. Weird.\n"));
 		}
 	}
 
