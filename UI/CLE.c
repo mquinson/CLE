@@ -156,6 +156,7 @@ int main(int argc, char **argv) {
     /* Free any allocated data */
     g_object_unref( G_OBJECT( global_data->builder ) );
     g_slice_free( CLE_data_t, global_data );
+    
 
     return( 0 );
 }

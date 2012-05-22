@@ -46,7 +46,7 @@ void CLE_add_log_to_all(char* text)
   int i;
   for(i=0; i<global_data->lesson->e_curr->worldAmount; ++i)
   {
-    CLE_add_log_for_world(strdup(text), i);
+    CLE_add_log_for_world(text, i);
   }
 }
 

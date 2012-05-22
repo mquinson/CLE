@@ -68,11 +68,11 @@ void display_compilation_errors(char* message) {
       second_2p = end+1;
 
     if(!strncmp(second_2p+2, "error", strlen("error")) || !strncmp(second_2p+2, "erreur", strlen("erreur")))
-      CLE_add_mark_to_all(strdup(second_2p+2),numline, ERROR_LOG);
+      CLE_add_mark_to_all(second_2p+2,numline, ERROR_LOG);
     else if(!strncmp(second_2p+2, "warning", strlen("warning")) || !strncmp(second_2p+2, "attention", strlen("attention")))
-      CLE_add_mark_to_all(strdup(second_2p+2),numline, WARNING_LOG);
+      CLE_add_mark_to_all(second_2p+2,numline, WARNING_LOG);
   }
-  CLE_add_log_to_all(strdup(message));
+  CLE_add_log_to_all(message);
   free(line);
   regfree(&preg);
 }
@@ -123,7 +123,7 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      free(number);
 	      if(numero_line < data->source_limit+1)
 	      {
-		CLE_add_mark_to_world(strdup(last_error_message),numero_line, ERROR_LOG, 0);
+		CLE_add_mark_to_world(last_error_message,numero_line, ERROR_LOG, 0);
 	      }
 	    }
 	  }
@@ -148,7 +148,7 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      free(number);
 	      if(numero_line < data->source_limit+1)
 	      {
-		CLE_add_mark_to_world(strdup(last_error_message),numero_line, INFO_LOG,0);
+		CLE_add_mark_to_world(last_error_message,numero_line, INFO_LOG,0);
 	      }
 	    }
 	    adress_stack=0;
@@ -268,6 +268,8 @@ void *exercise_run_log_listener(void *d) {
     else
       ++tmp;
   }
+  if(data->valgrind_log->source_name)
+    free(data->valgrind_log->source_name);
   free(data->valgrind_log);
   free(data);
   return NULL;

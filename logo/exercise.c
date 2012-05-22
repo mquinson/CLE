@@ -67,7 +67,7 @@ void* exercise_demo_runner(void* exo) {
 		    {
 		      ++tmp;
 		      *tmp='\0';
-		      display_compilation_errors(strdup(tmp));
+		      display_compilation_errors(tmp);
 		      tmp=buff;
 		    }
 		    else
@@ -262,6 +262,7 @@ void exercise_run_one_entity(entity_t t) {
 	data->valgrind_log->world_numero = world_get_rank(entity_get_world(t));
 	/*A null source_name means that we use global prefix for filename */
 	data->valgrind_log->source_name = NULL;
+	data->valgrind_log->line = NULL;
 	data->valgrind_log->source_limit = CLE_get_sourcecode_size();
 	GThread * log_listener = g_thread_create(exercise_run_log_listener,data,1,NULL);
 	
@@ -312,6 +313,9 @@ void exercise_run_one_entity(entity_t t) {
 		  CLE_add_log_for_world(strdup(buff), world_get_rank(entity_get_world(t)));
 		}
 	}
+	if(buff)
+	  free(buff);
+	
 	/* the child is done. Cleaning */
 	fclose(fromchild);
 	fclose(tochild);
@@ -394,6 +398,7 @@ void* exercise_run_runner(void *exo) {
 	else
 	  CLE_dialog_failure("One world differs from its goal");
 	g_mutex_unlock(e->run_runner_running);
+	free(runners);
 	unlink(e->binary);
 	return NULL;
 }
@@ -445,7 +450,7 @@ void exercise_run(exercise_t e, char *source) {
 		  {
 		    ++tmp;
 		    *tmp='\0';
-		  display_compilation_errors(strdup(buff));
+		  display_compilation_errors(buff);
 		  tmp=buff;
 		  }
 		  else
