@@ -53,24 +53,10 @@ void* exercise_demo_runner(void *exo) {
 	exercise_t e = exo;
 	demo_runner_running = (GMutex *)e->demo_runner_running;
 	if(e->s_filename==NULL){
-	  char *filename= strdup("/tmp/CLEs.XXXXXX");
+	  char *filename= generate_temporary_sourcefile_header(e, userside, NULL);
 	  char* binary_t = strdup("/tmp/CLEb.XXXXXX");
 	  int ignored =mkstemp(binary_t); // avoid the useless warning on mktemp dangerousness
 	  close(ignored);
-	  int fd = mkstemp(filename);
-
-	  /* Copy stringified version of userside to file */
-	  char *p = userside;
-	  int todo = strlen(p);
-	  while (todo>0)
-		  todo -= write(fd,p,todo);
-
-	  p = strdup(e->prof_solution);
-	  todo = strlen(e->prof_solution);
-	  while (todo>0)
-		  todo -= write(fd,p,todo);
-
-	  close(fd);
 
 	  /* Fork a process to compile it */
 	  int status;
@@ -188,20 +174,6 @@ void exercise_demo_stop(void* ex) {
 	 */
 	exercise_t e = ex;
 	world_set_step_delay(e->w_goal[0],0);
-}
-
-
-/* Small thread in charge of listening everything that the user's turtle printf()s,
- * and add it to the log console */
-void *exercise_run_log_listener(void *pipe) {
-	int fd = *(int*)pipe;
-    char buff[1024];
-    int got;
-    while ((got = read(fd,&buff,1023))>0) {
-      buff[got] = '\0';
-      CLE_log_append(strdup(buff));
-    }
-    return NULL;
 }
 
 
@@ -595,38 +567,10 @@ void exercise_run(exercise_t ex, char *source) {
 	CLE_log_clear();
 
 	/* create 2 filenames */
-	char *filename= strdup("/tmp/CLEs.XXXXXX");
+	char *filename= generate_temporary_sourcefile_header(e, userside, source);
 	binary = strdup("/tmp/CLEb.XXXXXX");
 	int ignored =mkstemp(binary); // avoid the useless warning on mktemp dangerousness
 	close(ignored);
-	int fd = mkstemp(filename);
-
-	/* Copy stringified version of userside to file */
-	char *p = userside;
-	int todo = strlen(p);
-	while (todo>0)
-		todo -= write(fd,p,todo);
-	
-	int i;
-	for(i=0 ; i<e->unauthorizedNumber ; ++i)
-	{
-	  write(fd, "#define ", strlen("#define "));
-	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
-	  write(fd, " You_cannot_use_", strlen(" You_cannot_use_"));
-	  write(fd, e->unauthorizedFunction[i], strlen(e->unauthorizedFunction[i]));
-	  write(fd, "\n", 1);
-	}
-	
-	write(fd,"\n#line 1 \"", strlen("\n#line 1 \""));
-	write(fd,filename, strlen(filename));
-	write(fd,"\"\n", strlen("\"\n"));
-	
-	p = source;
-	todo = strlen(source);
-	while (todo>0)
-		todo -= write(fd,p,todo);
-
-	close(fd);
 
 	/* Fork a process to compile it */
 	int gcc[2];
@@ -647,16 +591,21 @@ void exercise_run(exercise_t ex, char *source) {
 	default: // Father: listen what gcc has to tell
 		close(gcc[1]);
 		char buff[1024];
+		char* tmp=buff;
 		int got;
-		while ((got = read(gcc[0],&buff,1023))>0) {
-			exercise_append_gcc_log(e, buff, got);
-			buff[0] = '\0';
+		while ((got = read(gcc[0],tmp,1))>0) {
+		  if(*tmp=='\n')
+		  {
+		    ++tmp;
+		    *tmp='\0';
+		    display_compilation_errors(buff);
+		    tmp=buff;
+		  }
+		  else
+		    ++tmp;
 		}
 		waitpid(pid,&status,0);
 		close(gcc[0]);
-		if (e->gcc_report_new)
-		  CLE_log_append(strdup(e->gcc_report));
-		display_compilation_errors(e);
 	}
 	exercise_set_binary(e, binary);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
@@ -730,12 +679,6 @@ exercise_t exercise_new(const char *mission, const char *template,
 	result->w_init = NULL;
 	result->w_curr = NULL;
 	result->w_goal = NULL;
-	
-	result->gcc_report_new=0;
-	result->gcc_report = NULL;
-	
-	result->nb_logs = 0;
-	result->gcc_logs = malloc(sizeof(log_error)*MAX_NB_LOG_ERRORS);
 	
 	result->worldAmount = 0;
 	result->exercise_free = exercise_free;

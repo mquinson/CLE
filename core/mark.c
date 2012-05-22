@@ -10,14 +10,13 @@
 
 
 void CLE_clear_mark(int num_world) {
-//   printf("CLE_clear_mark call %d\n", num_world);
   if(global_data->worlds_mark==NULL || num_world != global_data->current_world_expose)
     return;
   GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(global_data->source_view));
   
-//   printf("Removing all mark %d\n", global_data->worlds_mark[num_world]->nb_mark);
   int i;
   for (i=0;i<global_data->worlds_mark[num_world]->nb_mark ;i++) {
+    /*Removing mark only if there are not already remove*/
     if(!gtk_text_mark_get_deleted(GTK_TEXT_MARK(global_data->worlds_mark[num_world]->marks[i]->mark)))
       gtk_text_buffer_delete_mark(buffer,GTK_TEXT_MARK(global_data->worlds_mark[num_world]->marks[i]->mark));
   }
@@ -50,13 +49,13 @@ void CLE_add_mark_to_world(char* message, int line, int type, int num_world) {
     return;
   if(global_data->current_world_expose == num_world)
     CLE_clear_mark(num_world);
+  
   // Save mark pt
     global_data->worlds_mark[num_world]->marks = realloc(global_data->worlds_mark[num_world]->marks,sizeof(mark_data)*(global_data->worlds_mark[num_world]->nb_mark + 1));
     if (global_data->worlds_mark[num_world]->marks==NULL) {
       perror("Realloc failed in CLE_add_mark\n");
       exit(1);
     }
-    //printf("%d %p %p %p\n",list_marks->nb_mark,list_marks, list_marks->marks, list_marks->marks[list_marks->nb_mark]);
     global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark] = malloc(sizeof(mark_data));
     global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark]->mark = mark;
     global_data->worlds_mark[num_world]->marks[global_data->worlds_mark[num_world]->nb_mark]->line = line;
@@ -66,15 +65,12 @@ void CLE_add_mark_to_world(char* message, int line, int type, int num_world) {
     if(global_data->current_world_expose == num_world)
       CLE_show_mark();
     
-    //printf("Erreur en ligne %d\n",line);
 }
 
 void CLE_free_mark_of_world(int num_world)
 {
-//   printf("CLE_free_mark_of_world call %d\n", num_world);
   int j;
   CLE_clear_mark(num_world);
-//   printf("Begin supress mark for world %d\n", num_world);
   for(j=0; j<global_data->worlds_mark[num_world]->nb_mark; ++j)
   {
     if(global_data->worlds_mark[num_world]->marks[j] == NULL)
@@ -82,10 +78,8 @@ void CLE_free_mark_of_world(int num_world)
       
     if(global_data->worlds_mark[num_world]->marks[j]->message)
     {
-//       printf("Begin suppress of message %d\n",j);
       free(global_data->worlds_mark[num_world]->marks[j]->message);
     }
-//     printf("Suppression of message %d\n",num_world);
     free(global_data->worlds_mark[num_world]->marks[j]);
   }
   global_data->worlds_mark[num_world]->marks=NULL;

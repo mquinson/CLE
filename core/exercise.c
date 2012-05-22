@@ -15,6 +15,7 @@
 
 #define SOURCEFILE_PREFIX "CLEs."
 #define STUDENT_FILENAME "student.c"
+#define TEACHER_FILENAME "teacher.c"
 
 
 void exercise_set_binary(exercise_t e, char* binary){
@@ -80,7 +81,6 @@ void display_compilation_errors(char* message) {
 static char last_error_message[1024];
 static int error_stack = 0;
 static int adress_stack=0;
-static int error_count=0;
 
 int display_valgrind_errors(valgrind_log_s *data) {
   
@@ -97,9 +97,9 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	{
 	  error_stack =1;
 	  adress_stack=0;
-	  ++error_count;
+	  ++(data->num_error);
 	  
-	  sprintf(last_error_message, "error %d : %s", error_count, tmp);
+	  sprintf(last_error_message, "error %d : %s", data->num_error, tmp);
 	  /*We copy all string without final '\n' */
 	  last_error_message[strlen(last_error_message)-1]='\0';
 	  CLE_add_log_for_world(" ", data->world_numero);
@@ -207,8 +207,8 @@ char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, c
   int todo;
   char *filename= strdup("/tmp/" SOURCEFILE_PREFIX "XXXXXX");
   int fd = mkstemp(filename);
-  
-  print_line_prepocessor_instruction(fd, get_amount_line(source)+2, filename);
+  if(source != NULL)
+    print_line_prepocessor_instruction(fd, get_amount_line(source)+2, filename);
   
   if(userside != NULL)
   {
@@ -225,13 +225,23 @@ char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, c
     }
   }
   
-  exercise_print_unauthorized(e, fd);
   
-  print_line_prepocessor_instruction(fd, 1, STUDENT_FILENAME);
-  
-  todo = strlen(source);
-  while (todo>0)
-    todo -= write(fd,source,todo);
+  /*If source != null, that mean that we create a student source file */
+  if(source != NULL)
+  {
+    exercise_print_unauthorized(e, fd);
+    print_line_prepocessor_instruction(fd, 1, STUDENT_FILENAME);
+    todo = strlen(source);
+    while (todo>0)
+      todo -= write(fd,source,todo);
+  }
+  else
+  {
+    print_line_prepocessor_instruction(fd, 1, TEACHER_FILENAME);
+    todo = strlen(e->prof_solution);
+    while (todo>0)
+      todo -= write(fd,e->prof_solution,todo);
+  }
   
   close(fd);
   

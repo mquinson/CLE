@@ -84,6 +84,8 @@ void CLE_log_append(char*text) {
   // do not use directly the UI from external threads. Queue work for the main dude instead.
   g_idle_add(log_append_from_main,(void*)text);
 }
+
+
 void CLE_log_clear() {
   // do not use directly the UI from external threads. Queue work for the main dude instead.
   g_idle_add(log_clear_from_main,NULL);

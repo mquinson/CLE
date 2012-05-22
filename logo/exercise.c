@@ -34,7 +34,7 @@ void* exercise_demo_runner(void* exo) {
 	exercise_t e = exo;
 	if(e->s_filename==NULL)
 	{
-	  char *filename= generate_temporary_sourcefile_header(e, userside, e->prof_solution);
+	  char *filename= generate_temporary_sourcefile_header(e, userside, NULL);
 	  
 	  char* binary_t = strdup("/tmp/CLEb.XXXXXX");
 	  int ignored =mkstemp(binary_t); // avoid the useless warning on mktemp dangerousness
@@ -263,6 +263,7 @@ void exercise_run_one_entity(entity_t t) {
 	/*A null source_name means that we use global prefix for filename */
 	data->valgrind_log->source_name = NULL;
 	data->valgrind_log->line = NULL;
+	data->valgrind_log->num_error=0;
 	data->valgrind_log->source_limit = CLE_get_sourcecode_size();
 	GThread * log_listener = g_thread_create(exercise_run_log_listener,data,1,NULL);
 	
@@ -492,12 +493,6 @@ exercise_t exercise_new(const char *mission, const char *template, const char *p
 	result->w_curr = NULL;
 	result->w_goal = NULL;
 	result->worldAmount = 0;
-	
-	result->gcc_report_new=0;
-	result->gcc_report = NULL;
-	
-	result->nb_logs = 0;
-	result->gcc_logs = malloc(sizeof(log_error)*MAX_NB_LOG_ERRORS);
 	
 	result->exercise_free = exercise_free;
 	result->unauthorizedNumber = 0;

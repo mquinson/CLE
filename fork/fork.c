@@ -10,6 +10,6 @@ lesson_t lesson_main() {
 	}
 	return lesson_new("Fork",3,
 			"1 fork", fork_1fork_create,
-			"what the fork?!", fork_what_the_fork_create,
-			"Exo1", fork_exo1_create);
+			"what the fork?!", fork_what_the_fork_create
+			/*"Exo1", fork_exo1_create*/);
 }

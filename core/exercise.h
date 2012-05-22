@@ -20,11 +20,14 @@ typedef struct {
   char* msg;
 } log_error_s, *log_error;
 
+
+
 typedef struct {
   char* line;
   char* source_name;
   int world_numero;
   int source_limit;
+  int num_error;
 } valgrind_log_s;
 
 
@@ -51,28 +54,34 @@ struct s_exercise {
 	core_world_t *w_init, *w_curr, *w_goal;
 	int worldAmount;
 	
-	int gcc_report_new;
-	log_error* gcc_logs;
-	int nb_logs;
-	char* gcc_report;
-	
 	void (* exercise_free)(exercise_t);
 };
 
 
-/* Memory management */
 void exercise_set_binary(exercise_t e, char* binary);
 char* exercise_get_binary(exercise_t e);
 
+/*Set the list give by parameter to the list of function prohibited*/
 void exercise_set_unauthorizedFunction(exercise_t e, char** functionNameList, int listSize);
 
+/* Function which process lines to recognize gcc log to add mark and print*/
 void display_compilation_errors(char* message);
+
+/* Function which process lines to recognize valgrinds log to add mark and print*/
 int display_valgrind_errors(valgrind_log_s *data);
 
+/* This function print the define's preprocessor directive used to prohibited function usage*/
 void exercise_print_unauthorized(exercise_t e, int fd);
+
+/*Print a line's preprocessor directive by using line and filename passed */
 void print_line_prepocessor_instruction(int fd, int line, char* filename);
+
+/*Generate a temporary sourcefile name by concatenantion of userside, and source.
+ * The function print line's preprocessor directive and unauthorized function if we generate student file
+ * Passing NULL as sources means that we used e->prof_solution for sources and compil for teacher */
 char* generate_temporary_sourcefile_header(exercise_t e, const char* userside, const char* source);
 
+/* Thread use to manage execution's log*/
 void *exercise_run_log_listener(void *d);
 
 

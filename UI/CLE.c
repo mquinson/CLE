@@ -28,7 +28,6 @@ G_MODULE_EXPORT void cb_can_undo_changed(GtkButton *button);
 G_MODULE_EXPORT void cb_menu_change_lesson(GtkMenuItem *menuitem, gpointer data);
 G_MODULE_EXPORT void cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data);
 G_MODULE_EXPORT void world_selection_change(GtkComboBox *arg0, gpointer   user_data);
-//G_MODULE_EXPORT void cb_debug_clicked(GtkButton *button)
 
 static gchar * mark_tooltip_func (GtkSourceMark *mark, gpointer user_data) { 
   return get_message_for_mark(mark);
@@ -438,13 +437,16 @@ cb_menu_change_lesson(GtkMenuItem *menuitem, gpointer data) {
 	    lesson_filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 	}
 	gtk_widget_destroy (dialog);
-
+	CLE_clear_worlds_mark();
+	CLE_clear_worlds_log();
 	/* If the user picked a lesson, use it */
 	if (lesson_filename)
 		CLE_set_lesson(lesson_from_file(lesson_filename));
 }
 G_MODULE_EXPORT void
 cb_menu_change_exercise(GtkMenuItem *menuitem, gpointer data) {
+	CLE_clear_worlds_mark();
+	CLE_clear_worlds_log();
 	int num=*(int*)data;
 	lesson_set_exo(global_data->lesson,num);
 }
