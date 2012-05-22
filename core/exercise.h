@@ -65,13 +65,9 @@ void exercise_set_binary(exercise_t e, char* binary);
 char* exercise_get_binary(exercise_t e);
 
 void exercise_set_unauthorizedFunction(exercise_t e, char** functionNameList, int listSize);
-char* exercice_get_log(exercise_t e, int line);
-void exercice_add_log(exercise_t e, int line, char* msg);
-void exercise_clear_log(exercise_t e);
 
 void display_compilation_errors(char* message);
 int display_valgrind_errors(valgrind_log_s *data);
-void exercise_append_gcc_log(exercise_t e,char* log, int size);
 
 void exercise_print_unauthorized(exercise_t e, int fd);
 void print_line_prepocessor_instruction(int fd, int line, char* filename);
