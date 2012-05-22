@@ -40,6 +40,8 @@ void CLE_log_append(char*text);
 /* Clear the console area */
 void CLE_log_clear();
 
+int CLE_is_debug_mode();
+
 
 /* The following shouldn't be accessed from outside of UI/ code */
 /* Convenience macros for obtaining objects from UI file */
@@ -106,7 +108,7 @@ void CLE_dialog_success(void);
 void CLE_dialog_failure(char *reason);
 
 
-void CLE_clear_mark();
+void CLE_clear_mark(int num_world);
 void CLE_show_mark();
 void CLE_clear_worlds_mark();
 void CLE_add_mark_to_world(char* message, int line, int type, int num_world);

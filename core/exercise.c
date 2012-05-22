@@ -125,8 +125,6 @@ int display_valgrind_errors(valgrind_log_s *data) {
 		CLE_add_mark_to_world(strdup(last_error_message),numero_line, ERROR_LOG, 0);
 	      }
 	    }
-	      
-	    printf("\n");
 	  }
 	  CLE_add_log_for_world("\t\t", data->world_numero);
 	  CLE_add_log_for_world(tmp, data->world_numero);
@@ -153,7 +151,6 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      }
 	    }
 	    adress_stack=0;
-	    printf("\n");
 	  }
 	  CLE_add_log_for_world("\t\t", data->world_numero);
 	  CLE_add_log_for_world(tmp, data->world_numero);
@@ -165,8 +162,6 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	  CLE_add_log_for_world(" ", data->world_numero);
 	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
-	else
-	  printf("ligne de valgrind reçu et non traité : %s", data->line);
 	return 0;
       }
     regfree(&preg);
@@ -252,7 +247,7 @@ void *exercise_run_log_listener(void *d) {
   
   if(global_data->debug)
   {
-    CLE_clear_worlds_log();
+    CLE_clear_logs_of_world(vl->world_numero);
     CLE_clear_worlds_mark();
   }
   char buff[1024];

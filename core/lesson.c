@@ -98,10 +98,9 @@ void lesson_set_exo(lesson_t l, int num) {
 	  global_data->worlds_log[i]=malloc(sizeof(char)*1);
 	  global_data->worlds_log[i][0]='\0';
 	  
-	  global_data->worlds_mark[i] = malloc(sizeof(mark_data*)*MAX_NB_LOG_ERRORS);
+	  global_data->worlds_mark[i] = malloc(sizeof(listMarks));
 	  global_data->worlds_mark[i]->nb_mark = 0;
 	  global_data->worlds_mark[i]->marks = NULL; 
 	}
-	printf("Fin de l'eajout de l'éxo\n");
 	CLE_exercise_has_changed();
 }

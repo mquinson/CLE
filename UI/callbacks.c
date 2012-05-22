@@ -107,7 +107,7 @@ world_selection_change(GtkComboBox *arg0, gpointer   user_data){
   if(gtk_combo_box_get_active(arg0) ==-1)
     return;
   CLE_log_clear();
-  CLE_clear_mark();
+  CLE_clear_mark(global_data->current_world_expose);
   
   global_data->current_world_expose = gtk_combo_box_get_active(arg0);
   world_ask_repaint(global_data->lesson->e_curr->w_curr[global_data->current_world_expose]);
