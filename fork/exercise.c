@@ -362,6 +362,12 @@ void *entity_fork_run(void *param){
 					entity_forward(pr->list_t[pr->nb_t-1], world_get_sizeY((core_world_t)pr->w)*0.3/pow(2,nb_branch-1));
 					entity_right(pr->list_t[pr->nb_t-1], 90);
 					forward_all_entities(pr->list_t,pr->nb_t,5);
+					
+					char *line = malloc(MAX_LINE*sizeof(char));
+					sprintf(line,"Processus %d created : processus %d\n",action->pid_father,action->pid_son);
+					printf("%s",line);
+					CLE_log_append(strdup(line));
+					free(line);
 				}
 							
 				/*A processus made a wait() so we change the color (purple) of the trace*/
@@ -402,6 +408,15 @@ void *entity_fork_run(void *param){
 				if(!strncmp(action->call,"read",strlen("read")) || !strncmp(action->call,"write",strlen("write"))){
 					char *line = malloc(MAX_LINE*sizeof(char));
 					sprintf(line,"Processus %d %s in the file descriptor %d : %s\n",action->pid_father,action->call,action->fd,action->message);
+					printf("%s",line);
+					CLE_log_append(strdup(line));
+					free(line);
+				}
+				
+				/*A processus made a SIG*/
+				if(!strncmp(action->call,"kil",strlen("kil")) || !strncmp(action->call,"SIG",strlen("SIG"))){
+					char *line = malloc(MAX_LINE*sizeof(char));
+					sprintf(line,"Processus %d received : %s\n",action->pid_father,action->call);
 					printf("%s",line);
 					CLE_log_append(strdup(line));
 					free(line);
