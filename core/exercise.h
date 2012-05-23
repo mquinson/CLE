@@ -28,6 +28,9 @@ typedef struct {
   int world_numero;
   int source_limit;
   int num_error;
+  char last_error_message[1024];
+  int error_stack;
+  int adress_stack;
 } valgrind_log_s;
 
 

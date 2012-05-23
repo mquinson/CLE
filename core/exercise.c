@@ -46,7 +46,7 @@ void exercise_set_unauthorizedFunction(exercise_t e, char** functionNameList, in
 void display_compilation_errors(char* message) {
   
   regex_t preg;
-  if ( regcomp (&preg, "^"STUDENT_FILENAME":[0-9]+:", REG_NOSUB | REG_EXTENDED)) {
+  if ( regcomp (&preg, "^" STUDENT_FILENAME ":[0-9]+:", REG_NOSUB | REG_EXTENDED)) {
     perror("Erreur de compilation d'expression régulière\n");
     exit(1);
   }
@@ -59,28 +59,21 @@ void display_compilation_errors(char* message) {
   if (match==0) {
     // Display this line
     char *string_numline = strchr(line,':');
-    char *end = strchr(string_numline+1, ':');
-    *end ='\0';
+    /* We don't need to extract line because atoi convert the number until the next non digit symbol*/
     int numline = atoi(string_numline+1);
-    *end = ':';
     
-    char *second_2p = strchr(end+1, ':');
-    if(!second_2p)
-      second_2p = end+1;
+    /*We jump to the message type*/
+    char *second_2p = strchr(line, ' ')+1;
 
-    if(!strncmp(second_2p+2, "error", strlen("error")) || !strncmp(second_2p+2, "erreur", strlen("erreur")))
-      CLE_add_mark_to_all(second_2p+2,numline, ERROR_LOG);
-    else if(!strncmp(second_2p+2, "warning", strlen("warning")) || !strncmp(second_2p+2, "attention", strlen("attention")))
-      CLE_add_mark_to_all(second_2p+2,numline, WARNING_LOG);
+    if(!strncmp(second_2p, "error", strlen("error")) || !strncmp(second_2p, "erreur", strlen("erreur")))
+      CLE_add_mark_to_all(second_2p,numline, ERROR_LOG);
+    else if(!strncmp(second_2p, "warning", strlen("warning")) || !strncmp(second_2p, "attention", strlen("attention")))
+      CLE_add_mark_to_all(second_2p,numline, WARNING_LOG);
   }
   CLE_add_log_to_all(message);
   free(line);
   regfree(&preg);
 }
-
-static char last_error_message[1024];
-static int error_stack = 0;
-static int adress_stack=0;
 
 int display_valgrind_errors(valgrind_log_s *data) {
   
@@ -95,19 +88,22 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	char* tmp;
 	if((tmp=strstr(line, "Invalid")))
 	{
-	  error_stack =1;
-	  adress_stack=0;
+	  
+	  data->error_stack =1;
+	  data->adress_stack=0;
 	  ++(data->num_error);
 	  
-	  sprintf(last_error_message, "error %d : %s", data->num_error, tmp);
+	  sprintf(data->last_error_message, "error %d : %s", data->num_error, tmp);
 	  /*We copy all string without final '\n' */
-	  last_error_message[strlen(last_error_message)-1]='\0';
-	  CLE_add_log_for_world(" ", data->world_numero);
+	  data->last_error_message[strlen(data->last_error_message)-1]='\0';
+	  /*Put a space on first caracter of the line*/
+	  --tmp;
+	  *tmp=' ';
 	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else if((tmp=strstr(line, "at 0x")))
 	{
-	  if(error_stack)
+	  if(data->error_stack)
 	  {
 	    char* number;
 	    if(data->source_name!=NULL)
@@ -123,16 +119,18 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      free(number);
 	      if(numero_line < data->source_limit+1)
 	      {
-		CLE_add_mark_to_world(last_error_message,numero_line, ERROR_LOG, 0);
+		CLE_add_mark_to_world(data->last_error_message,numero_line, ERROR_LOG, 0);
 	      }
 	    }
 	  }
-	  CLE_add_log_for_world("\t\t", data->world_numero);
+	  /*Put a space on first caracter of the line*/
+	  --tmp;
+	  *tmp='\t';
 	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else if((tmp=strstr(line, "by 0x")))
 	{
-	  if(adress_stack)
+	  if(data->adress_stack)
 	  {
 	    char* number;
 	    if(data->source_name!=NULL)
@@ -148,19 +146,25 @@ int display_valgrind_errors(valgrind_log_s *data) {
 	      free(number);
 	      if(numero_line < data->source_limit+1)
 	      {
-		CLE_add_mark_to_world(last_error_message,numero_line, INFO_LOG,0);
+		sprintf(data->last_error_message, "error %d : Allocation of data", data->num_error);
+		CLE_add_mark_to_world(data->last_error_message,numero_line, INFO_LOG,0);
 	      }
 	    }
-	    adress_stack=0;
+	    data->adress_stack=0;
 	  }
-	  CLE_add_log_for_world("\t\t", data->world_numero);
+	  /*Put a space on first caracter of the line*/
+	  --tmp;
+	  *tmp='\t';
 	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	else if((tmp=strstr(line, "Address 0x")))
 	{
-	  error_stack =0;
-	  adress_stack=1;
-	  CLE_add_log_for_world(" ", data->world_numero);
+	  data->error_stack =0;
+	  data->adress_stack=1;
+	  
+	  /*Put a space on first caracter of the line*/
+	  --tmp;
+	  *tmp=' ';
 	  CLE_add_log_for_world(tmp, data->world_numero);
 	}
 	return 0;

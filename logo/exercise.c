@@ -47,8 +47,8 @@ void* exercise_demo_runner(void* exo) {
 	  int pid = fork();
 	  switch (pid) {
 	  case -1:
-		  CLE_add_log_to_all(strdup("Error while forking the compiler"));
-		  CLE_add_log_to_all(strdup(strerror(errno)));
+		  CLE_add_log_to_all("Error while forking the compiler");
+		  CLE_add_log_to_all(strerror(errno));
 		  break;
 	  case 0: // Child: run gcc
 		  close(gcc[0]);
@@ -130,9 +130,6 @@ void* exercise_demo_runner(void* exo) {
 }
 
 void exercise_demo(exercise_t e) {
-//   printf("Starting demo\n");
-//   int *p=NULL;
-//   printf("%d", *p);
 	int res = g_mutex_trylock(e->demo_runner_running);
 	if (!res) {
 		printf("Not restarting the demo (it's already running)\n");
@@ -209,8 +206,8 @@ void exercise_run_one_entity(entity_t t) {
 	int pid = fork();
 	int status;
 	if (pid < 0) {
-	  CLE_add_log_for_world(strdup("Error while forking the entity runner"), world_get_rank(entity_get_world(t)));
-	  CLE_add_log_for_world(strdup(strerror(errno)), world_get_rank(entity_get_world(t)));
+	  CLE_add_log_for_world("Error while forking the entity runner", world_get_rank(entity_get_world(t)));
+	  CLE_add_log_for_world(strerror(errno), world_get_rank(entity_get_world(t)));
 		return;
 	}
 	if (pid == 0) { // Child: run the entity
@@ -264,6 +261,8 @@ void exercise_run_one_entity(entity_t t) {
 	data->valgrind_log->source_name = NULL;
 	data->valgrind_log->line = NULL;
 	data->valgrind_log->num_error=0;
+	data->valgrind_log->error_stack=0;
+	data->valgrind_log->adress_stack=0;
 	data->valgrind_log->source_limit = CLE_get_sourcecode_size();
 	GThread * log_listener = g_thread_create(exercise_run_log_listener,data,1,NULL);
 	
@@ -310,8 +309,8 @@ void exercise_run_one_entity(entity_t t) {
 			entity_pen_down(t);
 			break;
 		default:
-		  CLE_add_log_for_world(strdup("Oops, unknown order from child: "), world_get_rank(entity_get_world(t)));
-		  CLE_add_log_for_world(strdup(buff), world_get_rank(entity_get_world(t)));
+		  CLE_add_log_for_world("Oops, unknown order from child: ", world_get_rank(entity_get_world(t)));
+		  CLE_add_log_for_world(buff, world_get_rank(entity_get_world(t)));
 		}
 	}
 	if(buff)
@@ -323,14 +322,14 @@ void exercise_run_one_entity(entity_t t) {
 	waitpid(entity_get_pid(t),&status,0);
 	if (WIFSIGNALED(status)) {
 		if (WTERMSIG(status)==SIGTERM) {
-		  CLE_add_log_for_world(strdup("(execution aborded on user request)\n"), world_get_rank(entity_get_world(t)));
+		  CLE_add_log_for_world("(execution aborded on user request)\n", world_get_rank(entity_get_world(t)));
 		} else if (WTERMSIG(status)==SIGSEGV) {
-		  CLE_add_log_for_world(strdup("The your code in a SIGSEGV. Check your pointers.\n"), world_get_rank(entity_get_world(t)));
+		  CLE_add_log_for_world("The your code in a SIGSEGV. Check your pointers.\n", world_get_rank(entity_get_world(t)));
 		} else {
-		  CLE_add_log_for_world(strdup("The child running the entity got signaled!\n"), world_get_rank(entity_get_world(t)));
+		  CLE_add_log_for_world("The child running the entity got signaled!\n", world_get_rank(entity_get_world(t)));
 		}
 	} else if (WIFEXITED(status) && WEXITSTATUS(status) !=0) {
-	  CLE_add_log_for_world(strdup("The child running the entity returned with abnormal return value!\n"), world_get_rank(entity_get_world(t)));
+	  CLE_add_log_for_world("The child running the entity returned with abnormal return value!\n", world_get_rank(entity_get_world(t)));
 	}
 	g_thread_join(log_listener);
 	//printf("Done running entity %p\n",t);
@@ -431,8 +430,8 @@ void exercise_run(exercise_t e, char *source) {
 	int pid = fork();
 	switch (pid) {
 	case -1:
-		CLE_log_append(strdup("Error while forking the compiler"));
-		CLE_log_append(strdup(strerror(errno)));
+		CLE_log_append("Error while forking the compiler");
+		CLE_log_append(strerror(errno));
 		break;
 	case 0: // Child: run gcc
 		close(gcc[0]);
@@ -468,9 +467,9 @@ void exercise_run(exercise_t e, char *source) {
 		g_mutex_unlock(e->run_runner_running);
 
 		if (WIFEXITED(status)) {
-			CLE_add_log_to_all(strdup("Compilation error. Abording code execution\n"));
+			CLE_add_log_to_all("Compilation error. Abording code execution\n");
 		} else if (WIFSIGNALED(status)) {
-			CLE_add_log_to_all(strdup("The compiler got a signal. Weird.\n"));
+			CLE_add_log_to_all("The compiler got a signal. Weird.\n");
 		}
 	}
 
@@ -504,39 +503,17 @@ void exercise_add_world(exercise_t e, core_world_t world)
 {
   world_set_rank(world, e->worldAmount);
    ++(e->worldAmount);
-   int i;
-   core_world_t* temp = malloc(sizeof(core_world_t*)*e->worldAmount);
-   for(i=0; i<e->worldAmount-1; ++i)
-   {
-     temp[i] = e->w_init[i];
-   }
-   temp[e->worldAmount-1] = world;
-   if(e->w_init)
-     free(e->w_init);
-   e->w_init = temp;
+
+   e->w_init = realloc(e->w_init, sizeof(core_world_t*)*e->worldAmount);
+   e->w_init[e->worldAmount-1] = world;
    
+   e->w_curr = realloc(e->w_curr, sizeof(core_world_t*)*e->worldAmount);
+   e->w_curr[e->worldAmount-1] = world_copy(world);
    
-   temp = malloc(sizeof(core_world_t*)*e->worldAmount);
-   for(i=0; i<e->worldAmount-1; ++i)
-   {
-     temp[i] = e->w_curr[i];
-   }
-   temp[e->worldAmount-1] = world_copy(world);
-   if(e->w_curr)
-     free(e->w_curr);
-   e->w_curr = temp;
+   e->w_goal = realloc(e->w_goal, sizeof(core_world_t*)*e->worldAmount);
+   e->w_goal[e->worldAmount-1] = world_copy(world);
    
-   
-   temp = malloc(sizeof(core_world_t*)*e->worldAmount);
-   for(i=0; i<e->worldAmount-1; ++i)
-   {
-     temp[i] = e->w_goal[i];
-   }
-   temp[e->worldAmount-1] = world_copy(world);
-   (*(temp[e->worldAmount-1]->exercise_demo))(e);
-   if(e->w_goal)
-     free(e->w_goal);
-   e->w_goal = temp;
+   (*(e->w_goal[e->worldAmount-1]->exercise_demo))(e);
 }
 
 
